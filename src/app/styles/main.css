@@ -135,6 +135,7 @@ input[type='range']::-moz-range-thumb {
 
 /* Panel scrollbars from semantic tokens */
 .panel-scroll {
+  scrollbar-gutter: stable;
   scrollbar-width: thin;
   scrollbar-color: var(--color-border) var(--color-border-muted);
 }
