@@ -16,7 +16,7 @@ export default defineConfig({
         name: 'Fusion',
         short_name: 'Fusion',
         description:
-          'Fusion — local photo collage editor. Pick images, layouts, style and watermark; export in your browser.',
+          'Fusion is a browser photo collage maker that runs locally: upload photos, pick or customize layouts, style borders and watermarks, then export JPG/PNG. No server upload, no account.',
         theme_color: '#50c878',
         background_color: '#f8fafc',
         display: 'standalone',

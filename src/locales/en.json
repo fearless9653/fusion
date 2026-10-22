@@ -1,11 +1,12 @@
 {
   "app": {
     "title": "Fusion",
+    "seoTitle": "Fusion — Free Local Photo Collage Editor | Templates, Watermark & Export",
     "language": "Language",
     "themeLight": "Light theme",
     "themeDark": "Dark theme",
     "themeSystem": "System theme",
-    "description": "Fusion — local photo collage editor. Pick images, layouts, style and watermark; export JPG/PNG in your browser."
+    "description": "Fusion is a browser photo collage maker that runs locally: upload photos, pick or customize layouts, style borders and watermarks, then export JPG/PNG. No server upload, no account."
   },
   "nav": {
     "customLayout": "Custom layout"

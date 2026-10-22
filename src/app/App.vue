@@ -20,7 +20,7 @@ const theme = ref<ThemeMode>(readStoredTheme())
 applyTheme(theme.value)
 
 watchEffect(() => {
-  const title = t('app.title')
+  const title = t('app.seoTitle')
   const description = t('app.description')
   document.title = title
   document.documentElement.lang = locale.value === 'en' ? 'en' : 'zh-CN'

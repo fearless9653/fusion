@@ -1,11 +1,12 @@
 {
   "app": {
     "title": "Fusion",
+    "seoTitle": "Fusion — 本地免费照片拼图编辑器｜模板排版 · 水印 · 导出 JPG/PNG",
     "language": "语言",
     "themeLight": "浅色模式",
     "themeDark": "深色模式",
     "themeSystem": "跟随系统",
-    "description": "Fusion — 本地照片拼图编辑器。选图、模板排版、样式与水印，浏览器内导出 JPG/PNG。"
+    "description": "Fusion 是一款在浏览器里完成本地拼图的工具：多图上传、模板与自定义排版、边框间距与水印，一键导出高清 JPG/PNG。图片不出浏览器，无需注册。"
   },
   "nav": {
     "customLayout": "自定义布局"
