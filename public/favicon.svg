@@ -1,0 +1,14 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="Photo collage">
+  <!-- Pinwheel collage: center square + 4 rotating rects; transparent gutters (no white plate) -->
+  <!-- Geometry: inset 1, arm 9, gutter 1.5, center 9 → content 30 -->
+  <!-- Top-left horizontal -->
+  <rect x="1" y="1" width="19.5" height="9" fill="#f97316"/>
+  <!-- Top-right vertical -->
+  <rect x="22" y="1" width="9" height="19.5" fill="#0ea5e9"/>
+  <!-- Bottom-left vertical -->
+  <rect x="1" y="11.5" width="9" height="19.5" fill="#14b8a6"/>
+  <!-- Center square (brand) -->
+  <rect x="11.5" y="11.5" width="9" height="9" fill="#50c878"/>
+  <!-- Bottom-right horizontal -->
+  <rect x="11.5" y="22" width="19.5" height="9" fill="#f43f5e"/>
+</svg>

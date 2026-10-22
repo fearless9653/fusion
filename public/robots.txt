@@ -1,0 +1,6 @@
+﻿# Fusion — allow all crawlers (no restrictions)
+User-agent: *
+Allow: /
+
+# Sitemap: uncomment and set your production URL when available
+# Sitemap: https://example.com/sitemap.xml

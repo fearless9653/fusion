@@ -1,0 +1,44 @@
+﻿<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fusion</title>
+    <meta
+      name="description"
+      content="Fusion — 本地照片拼图编辑器。选图、模板排版、样式与水印，导出 JPG/PNG。Local photo collage editor in your browser."
+    />
+    <meta name="robots" content="index, follow" />
+    <meta name="theme-color" content="#50c878" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Fusion" />
+    <meta property="og:title" content="Fusion" />
+    <meta
+      property="og:description"
+      content="Fusion — 本地照片拼图编辑器。选图、模板排版、样式与水印，导出 JPG/PNG。Local photo collage editor in your browser."
+    />
+    <meta property="og:image" content="/favicon.svg" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Fusion" />
+    <meta
+      name="twitter:description"
+      content="Fusion — 本地照片拼图编辑器。选图、模板排版、样式与水印，导出 JPG/PNG。Local photo collage editor in your browser."
+    />
+    <script>
+      try {
+        var stored = localStorage.getItem('fusion:theme')
+        var dark =
+          stored === 'dark' ||
+          (stored === 'system' &&
+            window.matchMedia &&
+            window.matchMedia('(prefers-color-scheme: dark)').matches)
+        document.documentElement.dataset.theme = dark ? 'dark' : 'light'
+      } catch (_) {}
+    </script>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

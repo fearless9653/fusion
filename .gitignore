@@ -1,0 +1,85 @@
+﻿# --- OS ---
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# --- IDE / editors ---
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.swp
+*~
+
+# --- AI / agent tool caches (do not ignore AGENTS.md — track if added) ---
+.cursor/
+.claude/
+.codex/
+.continue/
+.windsurf/
+.aider*
+.gemini/
+.anthropic/
+
+# --- Logs ---
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# --- Dependencies ---
+node_modules/
+.pnpm-store/
+.yarn/
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*
+
+# --- Build / Vite / caches ---
+dist/
+dist-ssr/
+build/
+out/
+.vite/
+.turbo/
+.cache/
+*.local
+*.tsbuildinfo
+
+# --- Test / coverage ---
+coverage/
+.nyc_output/
+.vitest/
+playwright-report/
+test-results/
+blob-report/
+
+# --- Env ---
+.env
+.env.*
+!.env.example
+
+# --- Temp / scratch ---
+tmp/
+temp/
+*.tmp
+*.temp
+_tmp-*
+
+# --- Local product notes (not versioned) ---
+docs/

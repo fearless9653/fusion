@@ -1,0 +1,5 @@
+﻿# Cloudflare Pages — static Vite output
+# Dashboard: build command `pnpm run build`, output directory `dist`
+name = "fusion"
+compatibility_date = "2026-10-22"
+pages_build_output_dir = "dist"

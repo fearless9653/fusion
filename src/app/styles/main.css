@@ -1,0 +1,177 @@
+﻿@import 'tailwindcss';
+
+/* Brand accent — emerald (UI chrome only) */
+@theme {
+  --color-brand: #50c878;
+  --color-brand-fg: #1f7a4a;
+  --color-brand-solid: #2f9e5f;
+  --color-brand-solid-hover: #3da86a;
+
+  /* Semantic UI surfaces / ink / borders (light defaults; dark overrides later) */
+  --color-surface: #ffffff;
+  --color-surface-muted: #f8fafc;
+  --color-ink: #0f172a;
+  --color-ink-muted: #475569;
+  --color-border: #e2e8f0;
+  --color-border-muted: #f1f5f9;
+
+  /* Status chrome (toast / coverage) */
+  --color-danger: #fecdd3;
+  --color-danger-muted: #fff1f2;
+  --color-danger-fg: #881337;
+  --color-warning-fg: #b45309;
+}
+
+:root {
+  color-scheme: light;
+  accent-color: var(--color-brand);
+  font-family:
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    Segoe UI,
+    Roboto,
+    Helvetica,
+    Arial,
+    'Apple Color Emoji',
+    'Segoe UI Emoji';
+  line-height: 1.5;
+  font-weight: 400;
+  color: var(--color-ink);
+  background-color: var(--color-surface-muted);
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+#app {
+  min-height: 100vh;
+}
+
+/* Checkboxes / radios keep brand accent; ranges use explicit light CSS below */
+input[type='checkbox'],
+input[type='radio'],
+progress {
+  accent-color: var(--color-brand);
+}
+
+input:focus-visible,
+button:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline-color: var(--color-brand);
+}
+
+/* Range sliders — track/thumb from semantic tokens */
+input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 1.25rem;
+  background: transparent;
+  cursor: pointer;
+  accent-color: transparent; /* avoid UA dark/green thumb */
+}
+
+input[type='range']:focus {
+  outline: none;
+}
+
+input[type='range']:focus-visible::-webkit-slider-thumb {
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--color-brand) 25%, transparent),
+    0 1px 2px color-mix(in srgb, var(--color-ink) 12%, transparent);
+}
+
+input[type='range']:focus-visible::-moz-range-thumb {
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--color-brand) 25%, transparent),
+    0 1px 2px color-mix(in srgb, var(--color-ink) 12%, transparent);
+}
+
+input[type='range']::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--color-border);
+}
+
+input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  margin-top: -5px;
+  border-radius: 999px;
+  background: var(--color-surface);
+  border: 2px solid var(--color-brand);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--color-ink) 12%, transparent);
+}
+
+input[type='range']::-moz-range-track {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--color-border);
+  border: none;
+}
+
+input[type='range']::-moz-range-progress {
+  height: 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-brand) 35%, var(--color-border));
+  border: none;
+}
+
+input[type='range']::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: var(--color-surface);
+  border: 2px solid var(--color-brand);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--color-ink) 12%, transparent);
+}
+
+/* Panel scrollbars from semantic tokens */
+.panel-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) var(--color-border-muted);
+}
+
+.panel-scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.panel-scroll::-webkit-scrollbar-track {
+  background: var(--color-border-muted);
+  border-radius: 999px;
+}
+
+.panel-scroll::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 999px;
+  border: 2px solid var(--color-border-muted);
+}
+
+.panel-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--color-ink-muted);
+}
+
+/* Dark mode — semantic tokens only (collage stage/export stay on session colors) */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --color-surface: #1e293b;
+  --color-surface-muted: #0f172a;
+  --color-ink: #f8fafc;
+  --color-ink-muted: #94a3b8;
+  --color-border: #334155;
+  --color-border-muted: #1e293b;
+  /* Slightly brighter brand text on dark surfaces */
+  --color-brand-fg: #6ee7a8;
+  --color-danger: #9f1239;
+  --color-danger-muted: #4c0519;
+  --color-danger-fg: #fecdd3;
+  --color-warning-fg: #fbbf24;
+}
