@@ -385,7 +385,7 @@ async function onCopy(): Promise<void> {
         </div>
       </PanelSection>
 
-      <PanelSection :title="t('collage.style')">
+      <PanelSection :title="t('collage.style')" :initially-open="false">
         <label class="block text-xs text-ink-muted">
           {{ t('collage.spacing') }}: {{ style.spacing }}px
           <input

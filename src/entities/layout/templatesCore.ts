@@ -185,4 +185,47 @@ export const CORE_TEMPLATES: LayoutDefinition[] = [
       },
     ],
   },
+  // Default collage / favicon pinwheel (center + 4 rotating arms)
+  {
+    schemaVersion: 1,
+    id: 'tpl_5_center',
+    name: '5 center',
+    imageCount: 5,
+    grid: {
+      rows: 3,
+      cols: 3,
+    },
+    cells: [
+      {
+        row: 0,
+        col: 0,
+        rowSpan: 1,
+        colSpan: 2,
+      },
+      {
+        row: 0,
+        col: 2,
+        rowSpan: 2,
+        colSpan: 1,
+      },
+      {
+        row: 1,
+        col: 0,
+        rowSpan: 2,
+        colSpan: 1,
+      },
+      {
+        row: 1,
+        col: 1,
+        rowSpan: 1,
+        colSpan: 1,
+      },
+      {
+        row: 2,
+        col: 1,
+        rowSpan: 1,
+        colSpan: 2,
+      },
+    ],
+  },
 ]

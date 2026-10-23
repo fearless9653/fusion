@@ -63,7 +63,8 @@ onMounted(() => {
     }
   }
   if (!collage.layout) {
-    const fallback = getTemplate('tpl_grid_2x2') ?? getTemplate('tpl_single')
+    const fallback =
+      getTemplate('tpl_5_center') ?? getTemplate('tpl_grid_2x2') ?? getTemplate('tpl_single')
     if (fallback) collage.setLayout(fallback)
   }
 })
