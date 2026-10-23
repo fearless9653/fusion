@@ -66,7 +66,7 @@ function onUseLayout(): void {
         <input
           v-model="draftName"
           type="text"
-          class="rounded-md border border-border px-2 py-1.5 text-sm text-ink"
+          class="rounded-md border border-border bg-surface px-2 py-1.5 text-sm text-ink"
           @change="applyName"
           @keydown.enter.prevent="applyName"
         />
@@ -80,7 +80,7 @@ function onUseLayout(): void {
             type="number"
             :min="MIN_GRID"
             :max="MAX_GRID"
-            class="rounded-md border border-border px-2 py-1.5 text-sm text-ink"
+            class="rounded-md border border-border bg-surface px-2 py-1.5 text-sm text-ink"
           />
         </label>
         <label class="flex flex-col gap-1 text-xs text-ink-muted">
@@ -90,7 +90,7 @@ function onUseLayout(): void {
             type="number"
             :min="MIN_GRID"
             :max="MAX_GRID"
-            class="rounded-md border border-border px-2 py-1.5 text-sm text-ink"
+            class="rounded-md border border-border bg-surface px-2 py-1.5 text-sm text-ink"
           />
         </label>
       </div>

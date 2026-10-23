@@ -113,7 +113,7 @@ async function copyJson(): Promise<void> {
       <div class="relative min-h-0 flex-1">
         <textarea
           v-model="importText"
-          class="panel-scroll h-full min-h-0 w-full resize-none rounded-md border border-border bg-surface p-2 pr-10 font-mono text-[11px] leading-relaxed text-ink"
+          class="panel-scroll h-full min-h-0 w-full resize-none rounded-md border border-border bg-surface p-2 pr-10 font-mono text-[11px] leading-relaxed text-ink placeholder:text-ink-muted"
           :placeholder="t('customLayout.pasteJsonHint')"
           spellcheck="false"
           @input="onTextInput"

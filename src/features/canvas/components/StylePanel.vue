@@ -310,7 +310,7 @@ async function onCopy(): Promise<void> {
                 v-model.number="customW"
                 type="number"
                 min="1"
-                class="box-border h-9 w-full rounded-md border border-border px-2 text-sm leading-none"
+                class="box-border h-9 w-full rounded-md border border-border bg-surface px-2 text-sm leading-none text-ink"
               />
             </label>
             <label class="flex flex-col gap-1 text-xs text-ink-muted">
@@ -319,7 +319,7 @@ async function onCopy(): Promise<void> {
                 v-model.number="customH"
                 type="number"
                 min="1"
-                class="box-border h-9 w-full rounded-md border border-border px-2 text-sm leading-none"
+                class="box-border h-9 w-full rounded-md border border-border bg-surface px-2 text-sm leading-none text-ink"
               />
             </label>
             <div class="flex items-stretch gap-2.5">
@@ -381,7 +381,7 @@ async function onCopy(): Promise<void> {
               <input
                 type="number"
                 min="0"
-                class="mt-0.5 w-full rounded border border-border px-1 py-1 text-center text-xs"
+                class="mt-0.5 w-full rounded border border-border bg-surface px-1 py-1 text-center text-xs text-ink"
                 :value="style.borders[side]"
                 :aria-label="side"
                 @change="setBorder(side, Number(($event.target as HTMLInputElement).value) || 0)"
@@ -431,7 +431,7 @@ async function onCopy(): Promise<void> {
           {{ t('collage.watermarkText') }}
           <input
             type="text"
-            class="mt-1 w-full rounded border border-border px-2 py-1"
+            class="mt-1 w-full rounded border border-border bg-surface px-2 py-1 text-ink"
             :value="style.watermark.text"
             @change="patchWatermark({ text: ($event.target as HTMLInputElement).value })"
           />
@@ -479,8 +479,8 @@ async function onCopy(): Promise<void> {
               class="rounded border px-1 py-1.5 text-xs"
               :class="
                 (style.watermark.mode ?? 'tile') === 'tile'
-                  ? 'border-brand bg-brand/10'
-                  : 'border-border'
+                  ? 'border-brand bg-brand/10 text-brand-fg'
+                  : 'border-border hover:bg-surface-muted'
               "
               @click="patchWatermark({ mode: 'tile' })"
             >
@@ -490,7 +490,9 @@ async function onCopy(): Promise<void> {
               type="button"
               class="rounded border px-1 py-1.5 text-xs"
               :class="
-                style.watermark.mode === 'single' ? 'border-brand bg-brand/10' : 'border-border'
+                style.watermark.mode === 'single'
+                  ? 'border-brand bg-brand/10 text-brand-fg'
+                  : 'border-border hover:bg-surface-muted'
               "
               @click="patchWatermark({ mode: 'single' })"
             >
@@ -511,7 +513,9 @@ async function onCopy(): Promise<void> {
               type="button"
               class="rounded border px-1 py-1.5 text-xs"
               :class="
-                style.watermark.density === d.n ? 'border-brand bg-brand/10' : 'border-border'
+                style.watermark.density === d.n
+                  ? 'border-brand bg-brand/10 text-brand-fg'
+                  : 'border-border hover:bg-surface-muted'
               "
               @click="patchWatermark({ density: d.n })"
             >

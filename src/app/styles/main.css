@@ -168,7 +168,8 @@ input[type='range']::-moz-range-thumb {
   --color-ink: #f8fafc;
   --color-ink-muted: #94a3b8;
   --color-border: #334155;
-  --color-border-muted: #1e293b;
+  /* Between surface (#1e293b) and border (#334155); must differ from surface so bg-border-muted wells/pills read on bg-surface */
+  --color-border-muted: #273548;
   /* Slightly brighter brand text on dark surfaces */
   --color-brand-fg: #6ee7a8;
   --color-danger: #9f1239;
