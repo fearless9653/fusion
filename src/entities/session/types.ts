@@ -62,10 +62,21 @@ export type CellImageAssignment = {
   scale: number
 }
 
+/** Which UI control owns the current aspect ratio (mutually exclusive). */
+export type AspectSource = 'common' | 'print' | 'custom'
+
 export type CollageStyle = {
   aspectRatio: AspectRatio
   /** Optional print preset id (e.g. "A4"); null = screen/ratio-only. */
   printSizeId: string | null
+  /**
+   * Selected common aspect preset id (e.g. "3:2"); kept across orientation swap
+   * so the landscape chip stays highlighted when store W/H is portrait.
+   * Null when aspectSource is print/custom.
+   */
+  commonAspectId: string | null
+  /** Tracks preset vs custom so swap does not infer from W/H matching. */
+  aspectSource: AspectSource
   spacing: number
   radius: number
   borders: BorderWidths
@@ -104,6 +115,8 @@ export const CELL_SCALE_STEP = 0.1
 export const DEFAULT_STYLE: CollageStyle = {
   aspectRatio: { width: 1, height: 1 },
   printSizeId: null,
+  commonAspectId: '1:1',
+  aspectSource: 'common',
   spacing: 10,
   radius: 20,
   borders: { top: 10, right: 10, bottom: 10, left: 10 },

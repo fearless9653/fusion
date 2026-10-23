@@ -12,6 +12,7 @@ import {
   downloadBlob,
   exportFilename,
   getPairedPrintSizeId,
+  getPrintSizePreset,
   isSamePrintSizePair,
   jpegQualityFor,
   buildRenderImages,
@@ -27,8 +28,17 @@ const busy = ref(false)
 const bgInput = ref<HTMLInputElement | null>(null)
 
 const style = computed(() => collage.style)
-const customW = ref(style.value.aspectRatio.width)
-const customH = ref(style.value.aspectRatio.height)
+/** Draft only — empty until user types; never synced from preset clicks. */
+const customW = ref<number | ''>('')
+const customH = ref<number | ''>('')
+
+function isValidPositiveAspect(n: number | ''): n is number {
+  return typeof n === 'number' && Number.isFinite(n) && n > 0
+}
+
+const canApplyCustomAspect = computed(
+  () => isValidPositiveAspect(customW.value) && isValidPositiveAspect(customH.value),
+)
 
 const qualityOptions: Array<{ id: DownloadQuality; labelKey: string }> = [
   { id: 'medium-jpg', labelKey: 'collage.qualityMedium' },
@@ -101,30 +111,55 @@ function setBorder(side: 'top' | 'right' | 'bottom' | 'left', v: number): void {
 function setBgColor(color: string): void {
   collage.setStyle({ background: { ...style.value.background, color } })
 }
-function setAspect(w: number, h: number, printId: string | null = null): void {
-  customW.value = w
-  customH.value = h
-  collage.setAspectRatio(w, h, printId)
+function setCommonAspect(presetId: string, w: number, h: number): void {
+  customW.value = ''
+  customH.value = ''
+  collage.setAspectRatio(w, h, null, 'common', presetId)
+}
+function setPrintAspect(w: number, h: number, printId: string): void {
+  customW.value = ''
+  customH.value = ''
+  collage.setAspectRatio(w, h, printId, 'print')
 }
 function applyCustomAspect(): void {
-  const w = Math.max(1, Number(customW.value) || 1)
-  const h = Math.max(1, Number(customH.value) || 1)
+  if (!isValidPositiveAspect(customW.value) || !isValidPositiveAspect(customH.value)) return
+  const w = customW.value
+  const h = customH.value
   customW.value = w
   customH.value = h
-  collage.setAspectRatio(w, h, null)
+  collage.setAspectRatio(w, h, null, 'custom')
 }
-function swapCustomAspect(): void {
-  const w = Math.max(1, Number(customW.value) || 1)
-  const h = Math.max(1, Number(customH.value) || 1)
+function swapAspect(): void {
+  const source = style.value.aspectSource
+  if (source === 'print') {
+    const printId = style.value.printSizeId
+    if (!printId) return
+    // Flip via paired print preset mm (X ↔ X-L); leave custom draft untouched.
+    const pairedId = getPairedPrintSizeId(printId) ?? printId
+    const paired = getPrintSizePreset(pairedId)
+    if (paired) {
+      collage.setAspectRatio(paired.widthMm, paired.heightMm, paired.id, 'print')
+    } else {
+      const { width: w, height: h } = style.value.aspectRatio
+      collage.setAspectRatio(h, w, pairedId, 'print')
+    }
+    return
+  }
+
+  if (source === 'common') {
+    // Flip store W/H; keep commonAspectId so the landscape chip stays lit.
+    const { width: w, height: h } = style.value.aspectRatio
+    collage.setAspectRatio(h, w, null, 'common')
+    return
+  }
+
+  // custom: swap applied ratio + sync both inputs; empty draft → no-op
+  if (!isValidPositiveAspect(customW.value) || !isValidPositiveAspect(customH.value)) return
+  const w = customW.value
+  const h = customH.value
   customW.value = h
   customH.value = w
-  const printId = style.value.printSizeId
-  if (printId) {
-    const paired = getPairedPrintSizeId(printId) ?? printId
-    collage.setAspectRatio(h, w, paired)
-  } else {
-    collage.setAspectRatio(h, w, null)
-  }
+  collage.setAspectRatio(h, w, null, 'custom')
 }
 function setQuality(q: DownloadQuality): void {
   collage.setDownloadQuality(q)
@@ -261,13 +296,11 @@ async function onCopy(): Promise<void> {
               type="button"
               class="rounded border px-1 py-1.5 text-xs"
               :class="
-                !style.printSizeId &&
-                style.aspectRatio.width === preset.ratio.width &&
-                style.aspectRatio.height === preset.ratio.height
+                style.aspectSource === 'common' && style.commonAspectId === preset.id
                   ? 'border-brand bg-brand/10 text-brand-fg'
                   : 'border-border hover:bg-surface-muted'
               "
-              @click="setAspect(preset.ratio.width, preset.ratio.height, null)"
+              @click="setCommonAspect(preset.id, preset.ratio.width, preset.ratio.height)"
             >
               {{ preset.id }}
             </button>
@@ -284,11 +317,13 @@ async function onCopy(): Promise<void> {
               type="button"
               class="rounded border px-1 py-1.5 text-center text-xs"
               :class="
-                style.printSizeId && isSamePrintSizePair(style.printSizeId, print.id)
+                style.aspectSource === 'print' &&
+                style.printSizeId &&
+                isSamePrintSizePair(style.printSizeId, print.id)
                   ? 'border-brand bg-brand/10 text-brand-fg'
                   : 'border-border hover:bg-surface-muted'
               "
-              @click="setAspect(print.widthMm, print.heightMm, print.id)"
+              @click="setPrintAspect(print.widthMm, print.heightMm, print.id)"
             >
               <span class="block leading-tight font-medium">{{
                 t(`collage.printSize.${print.labelKey}`)
@@ -328,13 +363,19 @@ async function onCopy(): Promise<void> {
                 class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border bg-surface text-ink-muted hover:bg-brand/10 hover:text-brand-fg"
                 :title="t('collage.aspectSwap')"
                 :aria-label="t('collage.aspectSwap')"
-                @click="swapCustomAspect"
+                @click="swapAspect"
               >
                 <ArrowLeftRight class="h-4 w-4" aria-hidden="true" />
               </button>
               <button
                 type="button"
-                class="inline-flex h-9 min-w-0 flex-1 items-center justify-center rounded-md border border-border bg-surface px-3 text-xs font-medium text-ink-muted hover:bg-brand/10 hover:text-brand-fg"
+                class="inline-flex h-9 min-w-0 flex-1 items-center justify-center rounded-md border px-3 text-xs font-medium"
+                :class="
+                  style.aspectSource === 'custom'
+                    ? 'border-brand bg-brand/10 text-brand-fg'
+                    : 'border-border bg-surface text-ink-muted hover:bg-brand/10 hover:text-brand-fg'
+                "
+                :disabled="!canApplyCustomAspect"
                 @click="applyCustomAspect"
               >
                 {{ t('collage.apply') }}

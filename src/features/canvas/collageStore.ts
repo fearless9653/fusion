@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import type { LayoutDefinition } from '@/entities/layout'
 import { isFullCoverage, parseLayoutDefinition } from '@/entities/layout'
 import type {
+  AspectSource,
   CellImagePosition,
   CollageSessionState,
   CollageStyle,
@@ -132,8 +133,26 @@ export const useCollageStore = defineStore('collage', () => {
     })
   }
 
-  function setAspectRatio(width: number, height: number, printSizeId: string | null = null): void {
-    setStyle({ aspectRatio: { width, height }, printSizeId })
+  function setAspectRatio(
+    width: number,
+    height: number,
+    printSizeId: string | null = null,
+    aspectSource: AspectSource = printSizeId ? 'print' : 'common',
+    /** When `aspectSource` is `common`, omit to keep the current id (swap). */
+    commonAspectId?: string | null,
+  ): void {
+    const nextCommonId =
+      aspectSource === 'common'
+        ? commonAspectId !== undefined
+          ? commonAspectId
+          : session.value.style.commonAspectId
+        : null
+    setStyle({
+      aspectRatio: { width, height },
+      printSizeId: aspectSource === 'print' ? printSizeId : null,
+      aspectSource,
+      commonAspectId: nextCommonId,
+    })
   }
 
   function setDownloadQuality(quality: DownloadQuality): void {

@@ -109,6 +109,39 @@ describe('useCollageStore', () => {
     expect(store.selectedCellIndex).toBeNull()
   })
 
+  it('setAspectRatio persists explicit aspectSource through common swap', () => {
+    const store = useCollageStore()
+    expect(store.style.aspectSource).toBe('common')
+    expect(store.style.aspectRatio).toEqual({ width: 1, height: 1 })
+    expect(store.style.commonAspectId).toBe('1:1')
+
+    store.setAspectRatio(3, 2, null, 'common', '3:2')
+    expect(store.style.aspectSource).toBe('common')
+    expect(store.style.printSizeId).toBeNull()
+    expect(store.style.commonAspectId).toBe('3:2')
+
+    // Simulate StylePanel common swap: flip W/H, omit id → keep commonAspectId
+    store.setAspectRatio(2, 3, null, 'common')
+    expect(store.style.aspectSource).toBe('common')
+    expect(store.style.aspectRatio).toEqual({ width: 2, height: 3 })
+    expect(store.style.printSizeId).toBeNull()
+    expect(store.style.commonAspectId).toBe('3:2')
+
+    store.setAspectRatio(210, 297, 'A4', 'print')
+    expect(store.style.aspectSource).toBe('print')
+    expect(store.style.printSizeId).toBe('A4')
+    expect(store.style.commonAspectId).toBeNull()
+
+    store.setAspectRatio(5, 7, null, 'custom')
+    expect(store.style.aspectSource).toBe('custom')
+    expect(store.style.printSizeId).toBeNull()
+    expect(store.style.commonAspectId).toBeNull()
+
+    store.resetStyles()
+    expect(store.style.aspectSource).toBe('common')
+    expect(store.style.commonAspectId).toBe('1:1')
+  })
+
   it('clearCellImage removes assignment only', () => {
     const store = useCollageStore()
     store.setLayout(getTemplate('tpl_split_h')!)

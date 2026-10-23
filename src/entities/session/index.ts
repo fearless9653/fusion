@@ -1,5 +1,6 @@
 export type {
   AspectRatio,
+  AspectSource,
   BackgroundStyle,
   BorderWidths,
   CellImageAssignment,
