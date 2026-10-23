@@ -546,7 +546,7 @@ onUnmounted(() => {
                   panMode && cellHasImage(index) ? 'cursor-move' : 'cursor-pointer',
                   collage.selectedCellIndex === index
                     ? 'outline outline-2 outline-brand'
-                    : 'outline outline-1 outline-transparent hover:outline-border',
+                    : 'outline outline-1 outline-transparent hover:outline-brand',
                 ]"
                 :style="{
                   ...cellGridStyle(cell),
