@@ -69,14 +69,15 @@ function onCycleTheme(): void {
 <template>
   <div class="flex h-dvh max-h-dvh flex-col overflow-hidden">
     <header class="z-50 shrink-0 border-b border-border bg-surface">
-      <div class="flex items-center justify-between gap-4 px-4 py-2.5">
+      <!-- Fixed chrome height: h-8 (32) centered in 52px bar — avoids Firefox locale-switch jitter -->
+      <div class="flex h-[3.25rem] items-center justify-between gap-4 px-4">
         <RouterLink
           to="/"
           class="inline-flex cursor-pointer items-center rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
           :title="t('app.title')"
           :aria-label="t('app.title')"
         >
-          <img src="/favicon.svg" class="h-8 w-8 object-contain" :alt="t('app.title')" />
+          <img src="/favicon.svg" class="h-8 w-8 shrink-0 object-contain" :alt="t('app.title')" />
         </RouterLink>
         <div class="flex items-center gap-2">
           <MenuSelect
@@ -84,7 +85,7 @@ function onCycleTheme(): void {
             :options="localeOptions"
             :label="t('app.language')"
             align="end"
-            trigger-class="w-[7.25rem]"
+            trigger-class="w-[7.25rem] max-h-8 overflow-hidden shrink-0"
           >
             <template #icon>
               <Globe class="h-4 w-4" />
@@ -92,7 +93,7 @@ function onCycleTheme(): void {
           </MenuSelect>
           <button
             type="button"
-            class="inline-flex h-8 w-8 min-h-8 items-center justify-center rounded-full bg-border-muted text-ink-muted hover:bg-border hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+            class="inline-flex h-8 w-8 min-h-8 max-h-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-border-muted text-ink-muted hover:bg-border hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
             :title="themeLabel"
             :aria-label="themeLabel"
             @click="onCycleTheme"
