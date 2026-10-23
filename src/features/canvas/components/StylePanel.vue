@@ -6,11 +6,13 @@ import type { DownloadQuality } from '@/entities/session'
 import { useCollageStore } from '@/features/canvas'
 import {
   ASPECT_RATIO_PRESETS,
-  PRINT_SIZE_PRESETS,
+  PORTRAIT_PRINT_SIZE_PRESETS,
   canvasToBlob,
   copyBlobToClipboard,
   downloadBlob,
   exportFilename,
+  getPairedPrintSizeId,
+  isSamePrintSizePair,
   jpegQualityFor,
   buildRenderImages,
   renderCollage,
@@ -116,7 +118,13 @@ function swapCustomAspect(): void {
   const h = Math.max(1, Number(customH.value) || 1)
   customW.value = h
   customH.value = w
-  collage.setAspectRatio(h, w, null)
+  const printId = style.value.printSizeId
+  if (printId) {
+    const paired = getPairedPrintSizeId(printId) ?? printId
+    collage.setAspectRatio(h, w, paired)
+  } else {
+    collage.setAspectRatio(h, w, null)
+  }
 }
 function setQuality(q: DownloadQuality): void {
   collage.setDownloadQuality(q)
@@ -271,12 +279,12 @@ async function onCopy(): Promise<void> {
           </div>
           <div class="grid grid-cols-2 gap-1.5">
             <button
-              v-for="print in PRINT_SIZE_PRESETS"
+              v-for="print in PORTRAIT_PRINT_SIZE_PRESETS"
               :key="print.id"
               type="button"
               class="rounded border px-1 py-1.5 text-center text-xs"
               :class="
-                style.printSizeId === print.id
+                style.printSizeId && isSamePrintSizePair(style.printSizeId, print.id)
                   ? 'border-brand bg-brand/10 text-brand-fg'
                   : 'border-border hover:bg-surface-muted'
               "

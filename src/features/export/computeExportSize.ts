@@ -49,6 +49,27 @@ export const PRINT_SIZE_PRESETS: PrintSizePreset[] = [
   { id: 'A4-L', labelKey: 'A4L', ratioLabel: '297:210', widthMm: 297, heightMm: 210 },
 ]
 
+/** Portrait-only presets for the style panel (landscape *-L stay in PRINT_SIZE_PRESETS for export/swap). */
+export const PORTRAIT_PRINT_SIZE_PRESETS: PrintSizePreset[] = PRINT_SIZE_PRESETS.filter(
+  (p) => !p.id.endsWith('-L'),
+)
+
+/** Pair base id: `4R-L` → `4R`, `4R` → `4R`. */
+export function printSizePairBase(id: string): string {
+  return id.endsWith('-L') ? id.slice(0, -2) : id
+}
+
+/** Remap orientation within a print pair: `4R` ↔ `4R-L`. Undefined if no pair exists. */
+export function getPairedPrintSizeId(id: string): string | undefined {
+  const paired = id.endsWith('-L') ? id.slice(0, -2) : `${id}-L`
+  return PRINT_SIZE_PRESETS.some((p) => p.id === paired) ? paired : undefined
+}
+
+/** True when both ids belong to the same portrait/landscape print pair. */
+export function isSamePrintSizePair(a: string, b: string): boolean {
+  return printSizePairBase(a) === printSizePairBase(b)
+}
+
 /**
  * Common screen aspect ratios (ops-coffee “画布设置” set).
  * Print-oriented ratios (2:3 / 3:2 / 5:7 / …) live under PRINT_SIZE_PRESETS.

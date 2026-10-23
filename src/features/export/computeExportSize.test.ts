@@ -1,9 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import {
   DEFAULT_PRINT_DPI,
+  PORTRAIT_PRINT_SIZE_PRESETS,
+  PRINT_SIZE_PRESETS,
   QUALITY_MAX_EDGE,
   computeExportSize,
+  getPairedPrintSizeId,
   getPrintSizePreset,
+  isSamePrintSizePair,
+  printSizePairBase,
 } from './computeExportSize'
 
 function expectExactAspectMod10(
@@ -96,5 +101,35 @@ describe('computeExportSize', () => {
     })
     expect(size).toEqual({ width: 1000, height: 500 })
     expectExactAspectMod10(size, ratio)
+  })
+})
+
+describe('print size portrait UI helpers', () => {
+  it('keeps all 8 presets for export while UI list is portrait-only', () => {
+    expect(PRINT_SIZE_PRESETS.map((p) => p.id)).toEqual([
+      '4R',
+      '4R-L',
+      '5R',
+      '5R-L',
+      '8R',
+      '8R-L',
+      'A4',
+      'A4-L',
+    ])
+    expect(PORTRAIT_PRINT_SIZE_PRESETS.map((p) => p.id)).toEqual(['4R', '5R', '8R', 'A4'])
+  })
+
+  it('remaps print ids within a portrait/landscape pair', () => {
+    expect(getPairedPrintSizeId('4R')).toBe('4R-L')
+    expect(getPairedPrintSizeId('4R-L')).toBe('4R')
+    expect(getPairedPrintSizeId('A4')).toBe('A4-L')
+    expect(getPairedPrintSizeId('A4-L')).toBe('A4')
+    expect(getPairedPrintSizeId('unknown')).toBeUndefined()
+  })
+
+  it('matches highlight by pair base even when current id is landscape', () => {
+    expect(printSizePairBase('5R-L')).toBe('5R')
+    expect(isSamePrintSizePair('5R-L', '5R')).toBe(true)
+    expect(isSamePrintSizePair('5R', '8R')).toBe(false)
   })
 })
