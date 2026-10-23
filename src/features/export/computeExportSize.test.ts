@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   DEFAULT_PRINT_DPI,
   PORTRAIT_PRINT_SIZE_PRESETS,
+  ASPECT_RATIO_PRESETS,
   PRINT_SIZE_PRESETS,
   QUALITY_MAX_EDGE,
   computeExportSize,
@@ -105,18 +106,35 @@ describe('computeExportSize', () => {
 })
 
 describe('print size portrait UI helpers', () => {
-  it('keeps all 8 presets for export while UI list is portrait-only', () => {
+  it('keeps all presets for export while UI list is portrait-only', () => {
     expect(PRINT_SIZE_PRESETS.map((p) => p.id)).toEqual([
+      '3R',
+      '3R-L',
       '4R',
       '4R-L',
       '5R',
       '5R-L',
+      '6R',
+      '6R-L',
       '8R',
       '8R-L',
+      'S8R',
+      'S8R-L',
       'A4',
       'A4-L',
+      'A3',
+      'A3-L',
     ])
-    expect(PORTRAIT_PRINT_SIZE_PRESETS.map((p) => p.id)).toEqual(['4R', '5R', '8R', 'A4'])
+    expect(PORTRAIT_PRINT_SIZE_PRESETS.map((p) => p.id)).toEqual([
+      '3R',
+      '4R',
+      '5R',
+      '6R',
+      '8R',
+      'S8R',
+      'A4',
+      'A3',
+    ])
   })
 
   it('remaps print ids within a portrait/landscape pair', () => {
@@ -124,12 +142,29 @@ describe('print size portrait UI helpers', () => {
     expect(getPairedPrintSizeId('4R-L')).toBe('4R')
     expect(getPairedPrintSizeId('A4')).toBe('A4-L')
     expect(getPairedPrintSizeId('A4-L')).toBe('A4')
+    expect(getPairedPrintSizeId('S8R')).toBe('S8R-L')
+    expect(getPairedPrintSizeId('S8R-L')).toBe('S8R')
+    expect(getPairedPrintSizeId('3R')).toBe('3R-L')
+    expect(getPairedPrintSizeId('A3-L')).toBe('A3')
     expect(getPairedPrintSizeId('unknown')).toBeUndefined()
   })
 
   it('matches highlight by pair base even when current id is landscape', () => {
     expect(printSizePairBase('5R-L')).toBe('5R')
+    expect(printSizePairBase('S8R-L')).toBe('S8R')
+    expect(printSizePairBase('S8R')).toBe('S8R')
     expect(isSamePrintSizePair('5R-L', '5R')).toBe(true)
+    expect(isSamePrintSizePair('S8R-L', 'S8R')).toBe(true)
     expect(isSamePrintSizePair('5R', '8R')).toBe(false)
+  })
+})
+
+describe('aspect ratio presets', () => {
+  it('lists landscape-oriented common ratios including 3:2', () => {
+    expect(ASPECT_RATIO_PRESETS.map((p) => p.id)).toEqual(['1:1', '3:2', '4:3', '16:9', '16:10'])
+    expect(ASPECT_RATIO_PRESETS.find((p) => p.id === '3:2')?.ratio).toEqual({
+      width: 3,
+      height: 2,
+    })
   })
 })

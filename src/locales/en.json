@@ -79,14 +79,22 @@
     "watermarkPosBottomLeft": "Bottom left",
     "watermarkPosBottomRight": "Bottom right",
     "printSize": {
+      "3R": "5\" (3.5×5)",
+      "3RL": "5\" landscape",
       "4R": "6\" (4×6)",
       "4RL": "6\" landscape",
       "5R": "7\" (5×7)",
       "5RL": "7\" landscape",
+      "6R": "6×8",
+      "6RL": "6×8 landscape",
       "8R": "8\" (8×10)",
       "8RL": "8\" landscape",
+      "S8R": "8×12",
+      "S8RL": "8×12 landscape",
       "A4": "A4",
-      "A4L": "A4 landscape"
+      "A4L": "A4 landscape",
+      "A3": "A3",
+      "A3L": "A3 landscape"
     },
     "layoutGroup": "{n} cells",
     "emptyCellAdd": "Add image",

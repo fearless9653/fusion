@@ -79,14 +79,22 @@
     "watermarkPosBottomLeft": "左下角",
     "watermarkPosBottomRight": "右下角",
     "printSize": {
+      "3R": "5寸",
+      "3RL": "5寸横",
       "4R": "6寸",
       "4RL": "6寸横",
       "5R": "7寸",
       "5RL": "7寸横",
+      "6R": "6×8",
+      "6RL": "6×8横",
       "8R": "8寸",
       "8RL": "8寸横",
+      "S8R": "大8寸",
+      "S8RL": "大8寸横",
       "A4": "A4",
-      "A4L": "A4横"
+      "A4L": "A4横",
+      "A3": "A3",
+      "A3L": "A3横"
     },
     "layoutGroup": "{n} 图",
     "emptyCellAdd": "添加图片",

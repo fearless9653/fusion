@@ -39,14 +39,22 @@ export type PrintSizePreset = {
 }
 
 export const PRINT_SIZE_PRESETS: PrintSizePreset[] = [
+  { id: '3R', labelKey: '3R', ratioLabel: '3.5:5', widthMm: 89, heightMm: 127 },
+  { id: '3R-L', labelKey: '3RL', ratioLabel: '5:3.5', widthMm: 127, heightMm: 89 },
   { id: '4R', labelKey: '4R', ratioLabel: '2:3', widthMm: 102, heightMm: 152 },
   { id: '4R-L', labelKey: '4RL', ratioLabel: '3:2', widthMm: 152, heightMm: 102 },
   { id: '5R', labelKey: '5R', ratioLabel: '5:7', widthMm: 127, heightMm: 178 },
   { id: '5R-L', labelKey: '5RL', ratioLabel: '7:5', widthMm: 178, heightMm: 127 },
+  { id: '6R', labelKey: '6R', ratioLabel: '3:4', widthMm: 152, heightMm: 203 },
+  { id: '6R-L', labelKey: '6RL', ratioLabel: '4:3', widthMm: 203, heightMm: 152 },
   { id: '8R', labelKey: '8R', ratioLabel: '4:5', widthMm: 203, heightMm: 254 },
   { id: '8R-L', labelKey: '8RL', ratioLabel: '5:4', widthMm: 254, heightMm: 203 },
+  { id: 'S8R', labelKey: 'S8R', ratioLabel: '2:3', widthMm: 203, heightMm: 305 },
+  { id: 'S8R-L', labelKey: 'S8RL', ratioLabel: '3:2', widthMm: 305, heightMm: 203 },
   { id: 'A4', labelKey: 'A4', ratioLabel: '210:297', widthMm: 210, heightMm: 297 },
   { id: 'A4-L', labelKey: 'A4L', ratioLabel: '297:210', widthMm: 297, heightMm: 210 },
+  { id: 'A3', labelKey: 'A3', ratioLabel: '297:420', widthMm: 297, heightMm: 420 },
+  { id: 'A3-L', labelKey: 'A3L', ratioLabel: '420:297', widthMm: 420, heightMm: 297 },
 ]
 
 /** Portrait-only presets for the style panel (landscape *-L stay in PRINT_SIZE_PRESETS for export/swap). */
@@ -72,13 +80,14 @@ export function isSamePrintSizePair(a: string, b: string): boolean {
 
 /**
  * Common screen aspect ratios (ops-coffee “画布设置” set).
- * Print-oriented ratios (2:3 / 3:2 / 5:7 / …) live under PRINT_SIZE_PRESETS.
+ * Print-oriented ratios (2:3 / 5:7 / …) live under PRINT_SIZE_PRESETS; 3:2 is also a screen preset.
  */
 export const ASPECT_RATIO_PRESETS: Array<{ id: string; ratio: AspectRatio }> = [
   { id: '1:1', ratio: { width: 1, height: 1 } },
+  { id: '3:2', ratio: { width: 3, height: 2 } },
+  { id: '4:3', ratio: { width: 4, height: 3 } },
   { id: '16:9', ratio: { width: 16, height: 9 } },
   { id: '16:10', ratio: { width: 16, height: 10 } },
-  { id: '4:3', ratio: { width: 4, height: 3 } },
 ]
 
 export type ComputeExportSizeInput = {
