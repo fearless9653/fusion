@@ -7,6 +7,8 @@ import type { AspectRatio, DownloadQuality } from '@/entities/session'
  * - Screen / ratio-only export uses quality max-edge caps below.
  * - Print presets use 300 DPI unless overridden.
  * - A4 portrait mm → inches → px: 210×297 mm @ 300 DPI ≈ 2480×3508.
+ * - Screen (and print-in-box) sizes prefer exact aspect ratio with both
+ *   dimensions divisible by 10; long edge may sit slightly under the quality cap.
  */
 
 /** Default print resolution (pixels per inch). */
@@ -80,19 +82,46 @@ function mmToPx(mm: number, dpi: number): number {
   return Math.round((mm / 25.4) * dpi)
 }
 
-function fitToMaxEdge(ratio: AspectRatio, maxEdge: number): ExportSize {
-  const { width: rw, height: rh } = ratio
-  if (rw <= 0 || rh <= 0) {
+function gcd(a: number, b: number): number {
+  let x = Math.abs(Math.trunc(a))
+  let y = Math.abs(Math.trunc(b))
+  while (y !== 0) {
+    const t = y
+    y = x % y
+    x = t
+  }
+  return x || 1
+}
+
+function lcm(a: number, b: number): number {
+  return (a / gcd(a, b)) * b
+}
+
+/**
+ * Largest exact-ratio size with both dimensions divisible by 10 that fits in
+ * maxW×maxH. Long edge may sit slightly under the box / quality cap.
+ */
+function fitExactAspectMod10(ratio: AspectRatio, maxW: number, maxH: number): ExportSize {
+  const { width: rawRw, height: rawRh } = ratio
+  if (rawRw <= 0 || rawRh <= 0) {
     throw new Error('aspectRatio width/height must be positive')
   }
-  if (rw >= rh) {
-    const width = Math.round(maxEdge)
-    const height = Math.max(1, Math.round((maxEdge * rh) / rw))
-    return { width, height }
+  const g = gcd(rawRw, rawRh)
+  const rw = rawRw / g
+  const rh = rawRh / g
+  // Smallest positive k0 such that rw*k0 and rh*k0 are both multiples of 10.
+  const k0 = lcm(10 / gcd(rw, 10), 10 / gcd(rh, 10))
+  const maxK = Math.min(Math.floor(maxW / rw), Math.floor(maxH / rh))
+  let k = Math.floor(maxK / k0) * k0
+  if (k < k0) {
+    // Box smaller than one mod-10 step — still emit the minimal exact mod-10 size.
+    k = k0
   }
-  const height = Math.round(maxEdge)
-  const width = Math.max(1, Math.round((maxEdge * rw) / rh))
-  return { width, height }
+  return { width: rw * k, height: rh * k }
+}
+
+function fitToMaxEdge(ratio: AspectRatio, maxEdge: number): ExportSize {
+  return fitExactAspectMod10(ratio, maxEdge, maxEdge)
 }
 
 /**
@@ -106,17 +135,8 @@ export function computeExportSize(input: ComputeExportSizeInput): ExportSize {
   if (printSize) {
     const rawW = mmToPx(printSize.widthMm, dpi)
     const rawH = mmToPx(printSize.heightMm, dpi)
-    // Prefer physical print pixels; nudge to exact aspect if off by rounding.
-    const target = aspectRatio.width / aspectRatio.height
-    const actual = rawW / rawH
-    if (Math.abs(target - actual) < 0.01) {
-      return { width: rawW, height: rawH }
-    }
-    // Fit print box into the requested aspect (letterbox within print px).
-    if (target > actual) {
-      return { width: rawW, height: Math.max(1, Math.round(rawW / target)) }
-    }
-    return { width: Math.max(1, Math.round(rawH * target)), height: rawH }
+    // Largest exact-aspect, mod-10 size that fits in the raw print pixel box.
+    return fitExactAspectMod10(aspectRatio, rawW, rawH)
   }
 
   return fitToMaxEdge(aspectRatio, maxEdge)
