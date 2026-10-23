@@ -26,13 +26,13 @@ export const QUALITY_MAX_EDGE: Record<DownloadQuality, number> = {
 
 /**
  * Print / photo paper sizes (ops-coffee parity).
- * `labelKey` → i18n `collage.printSize.*`; ratio shown beside label in UI.
+ * `labelKey` → i18n `collage.printSize.*`; UI chips show name + mm (not ratio).
  */
 export type PrintSizePreset = {
   id: string
   /** i18n key under collage.printSize */
   labelKey: string
-  /** Short ratio tag for the button, e.g. 2:3 */
+  /** Short ratio tag (retained for tests / non-chip uses), e.g. 2:3 */
   ratioLabel: string
   widthMm: number
   heightMm: number

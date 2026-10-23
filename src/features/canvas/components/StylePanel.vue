@@ -290,10 +290,12 @@ async function onCopy(): Promise<void> {
               "
               @click="setAspect(print.widthMm, print.heightMm, print.id)"
             >
-              <span class="block leading-tight font-medium">{{ print.ratioLabel }}</span>
-              <span class="mt-0.5 block text-[10px] leading-tight text-ink-muted">{{
+              <span class="block leading-tight font-medium">{{
                 t(`collage.printSize.${print.labelKey}`)
               }}</span>
+              <span class="mt-0.5 block text-[10px] leading-tight text-ink-muted"
+                >{{ print.widthMm }}×{{ print.heightMm }} mm</span
+              >
             </button>
           </div>
         </div>
