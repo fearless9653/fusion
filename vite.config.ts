@@ -5,6 +5,22 @@ import vue from '@vitejs/plugin-vue'
 import { defineConfig } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
+/** Harmless Rollup noise from zod@4 PURE-annotation comments in node_modules. */
+function isZodPureAnnotationWarning(warning: {
+  code?: string
+  message: string
+  id?: string
+}): boolean {
+  const id = warning.id ?? ''
+  const msg = warning.message
+  const fromZod =
+    (id.includes('node_modules') && id.includes('zod')) || /node_modules[/\\].*zod[/\\]/.test(msg)
+  const uninterpretableAnnotation =
+    warning.code === 'INVALID_ANNOTATION' ||
+    msg.includes('contains an annotation that Rollup cannot interpret')
+  return fromZod && uninterpretableAnnotation
+}
+
 export default defineConfig({
   plugins: [
     vue(),
@@ -61,6 +77,14 @@ export default defineConfig({
   },
   worker: {
     format: 'es',
+  },
+  build: {
+    rollupOptions: {
+      onwarn(warning, warn) {
+        if (isZodPureAnnotationWarning(warning)) return
+        warn(warning)
+      },
+    },
   },
   test: {
     environment: 'jsdom',
