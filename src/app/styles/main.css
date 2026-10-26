@@ -49,6 +49,13 @@ body {
 
 #app {
   min-height: 100vh;
+  /* Chrome/shell: avoid accidental Ctrl+C of UI labels; editables opt back in below */
+  user-select: none;
+}
+
+/* Keep form fields and JSON editor text selectable (export Copy / copyJson APIs unchanged) */
+#app :is(input, textarea, [contenteditable='true'], [contenteditable='']) {
+  user-select: text;
 }
 
 /* Checkboxes / radios keep brand accent; ranges use explicit light CSS below */
