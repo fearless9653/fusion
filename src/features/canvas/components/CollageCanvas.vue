@@ -1,33 +1,19 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import CellChrome from '@/features/canvas/components/CellChrome.vue'
-import { CELL_SCALE_STEP, DEFAULT_CELL_SCALE, clampCellScale } from '@/entities/session'
+import { useGutterDrag } from '@/features/canvas/composables/useGutterDrag'
+import { useCellPointerInteractions } from '@/features/canvas/composables/useCellPointerInteractions'
+import { useWatermarkPreview } from '@/features/canvas/composables/useWatermarkPreview'
 import { useCollageStore } from '@/features/canvas'
-import {
-  estimateTextSize,
-  resolveWatermarkMode,
-  resolveWatermarkPosition,
-  watermarkSingleAnchor,
-  watermarkTileOffsets,
-} from '@/features/watermark'
 import {
   assignImagesFromIndex,
   imageFilesFromList,
   isFileDrag,
   useImageRegistry,
 } from '@/features/images'
-import {
-  fitAspectRect,
-  fractionsToCssTemplate,
-  measureSharedGutterSegments,
-  normalizeFractions,
-  redistributeAdjacent,
-} from '@/shared/lib'
+import { fitAspectRect, fractionsToCssTemplate } from '@/shared/lib'
 import { showToast } from '@/shared/ui'
-
-const NUDGE = 2
-const GUTTER_HIT = 8
 
 const { t } = useI18n()
 const collage = useCollageStore()
@@ -41,15 +27,43 @@ const gridBox = ref({ width: 0, height: 0 })
 let stageObserver: ResizeObserver | null = null
 let gridObserver: ResizeObserver | null = null
 
-/** Live pan overrides while pan-dragging (committed on pointerup). */
-const livePan = reactive<Record<number, { x: number; y: number }>>({})
+const layout = computed(() => collage.layout)
+const style = computed(() => collage.style)
 
-/** Live track fractions while dragging a gutter (committed on pointerup). */
-const liveRowFractions = ref<number[] | null>(null)
-const liveColFractions = ref<number[] | null>(null)
+const gutter = useGutterDrag({ collage, layout, style, gridEl, gridBox })
+const {
+  gutterDrag,
+  displayRowFractions,
+  displayColFractions,
+  measuredGutters,
+  onGutterPointerDown,
+  onGutterPointerMove,
+  finishGutterDrag,
+  cancelGutterDrag,
+} = gutter
 
-/** Ephemeral UI: pan vs swap/default drag (not in undo history). */
-const panMode = ref(false)
+const isGutterDragging = computed(() => gutterDrag.value !== null)
+
+const cellPtr = useCellPointerInteractions({
+  collage,
+  registry,
+  isGutterDragging,
+})
+const {
+  panMode,
+  cellHasImage,
+  scaleFor,
+  imagePreviewStyle,
+  onPointerDown,
+  onPanPointerMove,
+  onPointerUp: onCellPointerUp,
+  cancelCellPointer,
+  onCellWheel,
+  togglePanMode,
+  zoomIn,
+  zoomOut,
+  zoomReset,
+} = cellPtr
 
 const hasAnyCellImage = computed(() => collage.cellImages.some((c) => c.imageId !== null))
 
@@ -58,35 +72,6 @@ function clearAllImages(): void {
   collage.clearAllCellImages()
   showToast(t('collage.clearAllImagesDone'), 'info')
 }
-
-const dragSwap = ref<{ from: number } | null>(null)
-const panDrag = ref<{
-  index: number
-  startX: number
-  startY: number
-  originX: number
-  originY: number
-} | null>(null)
-
-const gutterDrag = ref<{
-  axis: 'row' | 'col'
-  gutterIndex: number
-  startClient: number
-  origin: number[]
-} | null>(null)
-
-const layout = computed(() => collage.layout)
-const style = computed(() => collage.style)
-
-const displayRowFractions = computed(() => {
-  const rows = layout.value?.grid.rows ?? 0
-  return normalizeFractions(rows, liveRowFractions.value ?? collage.rowFractions)
-})
-
-const displayColFractions = computed(() => {
-  const cols = layout.value?.grid.cols ?? 0
-  return normalizeFractions(cols, liveColFractions.value ?? collage.colFractions)
-})
 
 const bgImageUrl = computed(() => {
   const id = style.value.background.imageId
@@ -108,29 +93,7 @@ watch(
   { immediate: true },
 )
 
-const watermarkPreview = computed(() => {
-  const wm = style.value.watermark
-  if (!wm.enabled || !wm.text.trim()) {
-    return { mode: 'tile' as const, items: [] as Array<{ x: number; y: number }> }
-  }
-  const w = canvasSize.value.width
-  const h = canvasSize.value.height
-  if (w <= 0 || h <= 0) {
-    return { mode: 'tile' as const, items: [] as Array<{ x: number; y: number }> }
-  }
-  const text = wm.text.trim()
-  const metrics = estimateTextSize(text, wm.fontSize)
-  const mode = resolveWatermarkMode(wm)
-  if (mode === 'single') {
-    const a = watermarkSingleAnchor(resolveWatermarkPosition(wm), w, h, metrics, wm.rotation)
-    return { mode: 'single' as const, items: [{ x: a.x, y: a.y }] }
-  }
-  // Center-relative offsets (same metrics/step as drawWatermark).
-  return {
-    mode: 'tile' as const,
-    items: watermarkTileOffsets(w, h, wm.fontSize, wm.density, metrics),
-  }
-})
+const watermarkPreview = useWatermarkPreview(style, canvasSize)
 
 const canvasBoxStyle = computed(() => {
   const { width, height } = canvasSize.value
@@ -155,96 +118,11 @@ const gridTemplateStyle = computed(() => ({
   gap: `${style.value.spacing}px`,
 }))
 
-type GutterOverlay = {
-  axis: 'row' | 'col'
-  index: number
-  key: string
-  style: Record<string, string>
-}
-
-/**
- * Pixel-accurate gutter hit targets only where two cells share a boundary
- * (segments — no full-track ghosts across irregular spans).
- */
-const measuredGutters = computed((): GutterOverlay[] => {
-  const lay = layout.value
-  if (!lay) return []
-  const gap = Math.max(0, style.value.spacing)
-  const w = gridBox.value.width
-  const h = gridBox.value.height
-  if (w <= 0 || h <= 0) return []
-
-  const hit = Math.max(GUTTER_HIT, gap || GUTTER_HIT)
-  const segments = measureSharedGutterSegments({
-    cells: lay.cells,
-    rowFractions: displayRowFractions.value,
-    colFractions: displayColFractions.value,
-    gridWidth: w,
-    gridHeight: h,
-    gap,
-  })
-
-  return segments.map((seg) => {
-    const half = hit / 2
-    if (seg.axis === 'col') {
-      return {
-        axis: 'col' as const,
-        index: seg.index,
-        key: `col-${seg.index}-${Math.round(seg.start)}`,
-        style: {
-          top: `${seg.start}px`,
-          height: `${seg.length}px`,
-          left: `${seg.center - half}px`,
-          width: `${hit}px`,
-          cursor: 'col-resize',
-        },
-      }
-    }
-    return {
-      axis: 'row' as const,
-      index: seg.index,
-      key: `row-${seg.index}-${Math.round(seg.start)}`,
-      style: {
-        left: `${seg.start}px`,
-        width: `${seg.length}px`,
-        top: `${seg.center - half}px`,
-        height: `${hit}px`,
-        cursor: 'row-resize',
-      },
-    }
-  })
-})
-
-function positionFor(index: number): { x: number; y: number } {
-  if (livePan[index]) return livePan[index]!
-  return collage.cellImages[index]?.position ?? { x: 50, y: 50 }
-}
-
-function scaleFor(index: number): number {
-  return clampCellScale(collage.cellImages[index]?.scale)
-}
-
-/** Cover × scale × position: transform scale around object-position origin. */
-function imagePreviewStyle(index: number): Record<string, string> {
-  const p = positionFor(index)
-  const s = scaleFor(index)
-  return {
-    objectPosition: `${p.x}% ${p.y}%`,
-    transform: s === 1 ? 'none' : `scale(${s})`,
-    transformOrigin: `${p.x}% ${p.y}%`,
-  }
-}
-
 function cellGridStyle(cell: { row: number; col: number; rowSpan: number; colSpan: number }) {
   return {
     gridRow: `${cell.row + 1} / span ${cell.rowSpan}`,
     gridColumn: `${cell.col + 1} / span ${cell.colSpan}`,
   }
-}
-
-function cellHasImage(index: number): boolean {
-  const id = collage.cellImages[index]?.imageId
-  return Boolean(id && registry.get(id))
 }
 
 function clearCellSelection(): void {
@@ -317,72 +195,9 @@ function clearCellImage(event: Event, index: number): void {
   collage.clearCellImage(index)
 }
 
-function startPan(event: PointerEvent, index: number): void {
-  event.preventDefault()
-  const pos = positionFor(index)
-  panDrag.value = {
-    index,
-    startX: event.clientX,
-    startY: event.clientY,
-    originX: pos.x,
-    originY: pos.y,
-  }
-  ;(event.currentTarget as HTMLElement).setPointerCapture(event.pointerId)
-}
-
-function onPointerDown(event: PointerEvent, index: number): void {
-  if (gutterDrag.value) return
-  collage.selectCell(index)
-  const wantsPan = (panMode.value || event.altKey) && cellHasImage(index)
-  if (wantsPan) {
-    startPan(event, index)
-    return
-  }
-  if (collage.cellImages[index]?.imageId) {
-    dragSwap.value = { from: index }
-  }
-}
-
-function onGutterPointerDown(event: PointerEvent, axis: 'row' | 'col', gutterIndex: number): void {
-  event.preventDefault()
-  event.stopPropagation()
-  const origin = axis === 'row' ? [...displayRowFractions.value] : [...displayColFractions.value]
-  gutterDrag.value = {
-    axis,
-    gutterIndex,
-    startClient: axis === 'col' ? event.clientX : event.clientY,
-    origin,
-  }
-  if (axis === 'row') liveRowFractions.value = [...origin]
-  else liveColFractions.value = [...origin]
-  ;(event.currentTarget as HTMLElement).setPointerCapture(event.pointerId)
-}
-
 function onPointerMove(event: PointerEvent): void {
-  if (gutterDrag.value && gridEl.value) {
-    const { axis, gutterIndex, startClient, origin } = gutterDrag.value
-    const gap = Math.max(0, style.value.spacing)
-    const el = gridEl.value
-    const client = axis === 'col' ? event.clientX : event.clientY
-    const deltaPx = client - startClient
-    const sum = origin.reduce((a, b) => a + b, 0) || 1
-    const axisPx = axis === 'col' ? el.clientWidth : el.clientHeight
-    const usable = Math.max(1, axisPx - gap * Math.max(0, origin.length - 1))
-    const deltaNormalized = (deltaPx / usable) * sum
-    const next = redistributeAdjacent(origin, gutterIndex, deltaNormalized)
-    if (axis === 'row') liveRowFractions.value = next
-    else liveColFractions.value = next
-    return
-  }
-  if (!panDrag.value) return
-  const dx = event.clientX - panDrag.value.startX
-  const dy = event.clientY - panDrag.value.startY
-  // Invert delta: object-position % moves opposite to content — drag should follow finger
-  livePan[panDrag.value.index] = {
-    x: clamp(panDrag.value.originX - dx * 0.15, 0, 100),
-    // Vertical factor slightly higher so up/down feels at least as responsive as left/right
-    y: clamp(panDrag.value.originY - dy * 0.22, 0, 100),
-  }
+  if (onGutterPointerMove(event)) return
+  onPanPointerMove(event)
 }
 
 function onPointerUp(event: PointerEvent, index: number): void {
@@ -390,96 +205,12 @@ function onPointerUp(event: PointerEvent, index: number): void {
     finishGutterDrag()
     return
   }
-  if (panDrag.value) {
-    const final = livePan[panDrag.value.index]
-    if (final) {
-      collage.panCell(panDrag.value.index, final)
-      delete livePan[panDrag.value.index]
-    }
-    panDrag.value = null
-    return
-  }
-  if (dragSwap.value && dragSwap.value.from !== index) {
-    collage.swapCells(dragSwap.value.from, index)
-  }
-  dragSwap.value = null
-  void event
-}
-
-function finishGutterDrag(): void {
-  const drag = gutterDrag.value
-  if (!drag) return
-  if (drag.axis === 'row' && liveRowFractions.value) {
-    collage.setRowFractions(liveRowFractions.value)
-  }
-  if (drag.axis === 'col' && liveColFractions.value) {
-    collage.setColFractions(liveColFractions.value)
-  }
-  liveRowFractions.value = null
-  liveColFractions.value = null
-  gutterDrag.value = null
+  onCellPointerUp(event, index)
 }
 
 function onPointerCancel(): void {
-  if (gutterDrag.value) {
-    liveRowFractions.value = null
-    liveColFractions.value = null
-    gutterDrag.value = null
-  }
-  if (panDrag.value) {
-    delete livePan[panDrag.value.index]
-    panDrag.value = null
-  }
-  dragSwap.value = null
-}
-
-function onKeyDown(event: KeyboardEvent): void {
-  const idx = collage.selectedCellIndex
-  if (idx === null) return
-  if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) return
-  event.preventDefault()
-  const pos = { ...positionFor(idx) }
-  if (event.key === 'ArrowLeft') pos.x = clamp(pos.x - NUDGE, 0, 100)
-  if (event.key === 'ArrowRight') pos.x = clamp(pos.x + NUDGE, 0, 100)
-  if (event.key === 'ArrowUp') pos.y = clamp(pos.y - NUDGE, 0, 100)
-  if (event.key === 'ArrowDown') pos.y = clamp(pos.y + NUDGE, 0, 100)
-  collage.panCell(idx, pos)
-}
-
-function onCellWheel(event: WheelEvent, index: number): void {
-  if (collage.selectedCellIndex !== index) return
-  if (!cellHasImage(index)) return
-  event.preventDefault()
-  const delta = event.deltaY < 0 ? CELL_SCALE_STEP : -CELL_SCALE_STEP
-  collage.scaleCell(index, delta)
-}
-
-function togglePanMode(event: Event): void {
-  event.stopPropagation()
-  event.preventDefault()
-  panMode.value = !panMode.value
-}
-
-function zoomIn(event: Event, index: number): void {
-  event.stopPropagation()
-  event.preventDefault()
-  collage.scaleCell(index, CELL_SCALE_STEP)
-}
-
-function zoomOut(event: Event, index: number): void {
-  event.stopPropagation()
-  event.preventDefault()
-  collage.scaleCell(index, -CELL_SCALE_STEP)
-}
-
-function zoomReset(event: Event, index: number): void {
-  event.stopPropagation()
-  event.preventDefault()
-  collage.setCellScale(index, DEFAULT_CELL_SCALE)
-}
-
-function clamp(n: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, n))
+  cancelGutterDrag()
+  cancelCellPointer()
 }
 
 watch(gridEl, (el, _prev, onCleanup) => {
@@ -495,7 +226,6 @@ watch(gridEl, (el, _prev, onCleanup) => {
 })
 
 onMounted(() => {
-  window.addEventListener('keydown', onKeyDown)
   if (typeof ResizeObserver !== 'undefined' && stageEl.value) {
     stageObserver = new ResizeObserver((entries) => {
       const entry = entries[0]
@@ -516,14 +246,12 @@ onMounted(() => {
   }
 })
 onUnmounted(() => {
-  window.removeEventListener('keydown', onKeyDown)
   stageObserver?.disconnect()
   stageObserver = null
   gridObserver?.disconnect()
   gridObserver = null
 })
 </script>
-
 <template>
   <div class="flex h-full min-h-0 flex-col gap-2">
     <input

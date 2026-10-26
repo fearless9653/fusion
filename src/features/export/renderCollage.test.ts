@@ -1,13 +1,8 @@
 import { describe, expect, it, vi } from 'vitest'
 import { getTemplate } from '@/entities/layout'
 import { DEFAULT_STYLE, createEmptyCellImages } from '@/entities/session'
-import {
-  coverDrawRect,
-  drawCoverImage,
-  exportFilename,
-  jpegQualityFor,
-  renderCollage,
-} from './renderCollage'
+import { coverDrawRect, drawCoverImage, renderCollage } from './renderCollage'
+import { exportFilename, jpegQualityFor } from './exportIo'
 
 function mockCtx() {
   return {

@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { getTemplate } from '@/entities/layout'
@@ -63,9 +63,9 @@ onMounted(() => {
     }
   }
   if (!collage.layout) {
-    const fallback =
-      getTemplate('tpl_5_center') ?? getTemplate('tpl_grid_2x2') ?? getTemplate('tpl_single')
-    if (fallback) collage.setLayout(fallback)
+    // Product default: five-panel pinwheel (五图旋风 / favicon). Always in CORE_TEMPLATES.
+    const defaultTpl = getTemplate('tpl_5_center')
+    if (defaultTpl) collage.setLayout(defaultTpl)
   }
 })
 

@@ -59,7 +59,8 @@ export function measureWatermarkText(
 
 function densityGapMul(density: number): number {
   const d = Math.min(5, Math.max(1, Math.round(density)))
-  return DENSITY_GAP_MUL[d] ?? 1.5
+  // Keys 1–5 are always present after clamp.
+  return DENSITY_GAP_MUL[d]!
 }
 
 /**

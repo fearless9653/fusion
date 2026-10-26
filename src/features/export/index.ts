@@ -11,17 +11,15 @@ export {
   printSizePairBase,
 } from './computeExportSize'
 export type { ComputeExportSizeInput, ExportSize, PrintSizePreset } from './computeExportSize'
+export { coverDrawRect, drawCoverImage, renderCollage } from './renderCollage'
+export type { RenderCollageInput, RenderCollageResult, RenderImageSource } from './renderCollage'
 export {
   canvasToBlob,
   copyBlobToClipboard,
   downloadBlob,
-  coverDrawRect,
-  drawCoverImage,
   exportFilename,
   jpegQualityFor,
-  renderCollage,
-} from './renderCollage'
-export type { RenderCollageInput, RenderCollageResult, RenderImageSource } from './renderCollage'
+} from './exportIo'
 export { buildRenderImages } from './buildRenderImages'
 export { loadImageElement } from './loadImageElement'
 export { scaleStyleLengths, stylePxScale } from './styleScale'
