@@ -33,3 +33,17 @@ export {
   redoHistory,
   undoHistory,
 } from './history'
+
+export type { CellImageTransform, CellRotationDeg } from './cellImageTransform'
+export {
+  DEFAULT_CELL_FLIP_X,
+  DEFAULT_CELL_FLIP_Y,
+  DEFAULT_CELL_ROTATION,
+  DEFAULT_CELL_TRANSFORM,
+  cellTransformsEqual,
+  isIdentityCellTransform,
+  normalizeCellRotation,
+  resolveCellTransform,
+  rotateCellCw,
+  toCanonicalCellTransform,
+} from './cellImageTransform'

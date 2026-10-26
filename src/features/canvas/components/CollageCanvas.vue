@@ -63,6 +63,9 @@ const {
   zoomIn,
   zoomOut,
   zoomReset,
+  rotateCw,
+  flipHorizontal,
+  flipVertical,
 } = cellPtr
 
 const hasAnyCellImage = computed(() => collage.cellImages.some((c) => c.imageId !== null))
@@ -181,13 +184,6 @@ async function onCellDrop(event: DragEvent, index: number): Promise<void> {
   )
 }
 
-function replaceCellImage(event: Event, index: number): void {
-  event.stopPropagation()
-  event.preventDefault()
-  collage.selectCell(index)
-  openCellPicker(index)
-}
-
 function clearCellImage(event: Event, index: number): void {
   event.stopPropagation()
   event.preventDefault()
@@ -291,7 +287,7 @@ onUnmounted(() => {
               <div
                 v-for="(cell, index) in layout.cells"
                 :key="index"
-                class="group relative min-h-0 min-w-0 overflow-hidden bg-slate-200 transition"
+                class="group relative min-h-0 min-w-0 overflow-hidden bg-slate-200 transition [container-type:size]"
                 :class="panMode && cellHasImage(index) ? 'cursor-move' : 'cursor-pointer'"
                 :style="{
                   ...cellGridStyle(cell),
@@ -365,7 +361,9 @@ onUnmounted(() => {
                   :pan-mode="panMode"
                   :scale-percent="Math.round(scaleFor(index) * 100)"
                   @pan-toggle="togglePanMode"
-                  @replace="replaceCellImage($event, index)"
+                  @rotate="rotateCw($event, index)"
+                  @flip-horizontal="flipHorizontal($event, index)"
+                  @flip-vertical="flipVertical($event, index)"
                   @remove="clearCellImage($event, index)"
                   @zoom-in="zoomIn($event, index)"
                   @zoom-out="zoomOut($event, index)"

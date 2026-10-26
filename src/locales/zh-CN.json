@@ -16,7 +16,6 @@
     "selectedCell": "选中第 {n} 格",
     "pageDropTitle": "松开以上传图片",
     "pageDropHint": "将按空格顺序填入拼贴",
-    "cellReplace": "替换",
     "collapseLeft": "收起左侧栏",
     "expandLeft": "展开左侧栏",
     "collapseRight": "收起右侧栏",
@@ -67,7 +66,6 @@
     "exportClipboardFallback": "剪贴板不可用，已下载 PNG",
     "exportFailed": "导出失败",
     "cellRemove": "移除图片",
-    "cellRemoveTitle": "移除该格图片（布局不变）",
     "aspectCommon": "常见比例",
     "aspectPrint": "打印尺寸",
     "watermarkMode": "水印模式",
@@ -105,7 +103,10 @@
     "collapseAllGroups": "收起全部分组",
     "favorites": "收藏",
     "favoriteLayout": "加入收藏",
-    "unfavoriteLayout": "取消收藏"
+    "unfavoriteLayout": "取消收藏",
+    "cellRotateCw": "旋转 90°",
+    "cellFlipHorizontal": "左右镜像",
+    "cellFlipVertical": "上下镜像"
   },
   "customLayout": {
     "backToCollage": "返回拼贴",

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import { Hand, ImagePlus, Trash, ZoomIn, ZoomOut } from '@lucide/vue'
+import { FlipHorizontal, FlipVertical, Hand, RotateCw, Trash, ZoomIn, ZoomOut } from '@lucide/vue'
 
 defineProps<{
   selected: boolean
@@ -10,7 +10,9 @@ defineProps<{
 
 defineEmits<{
   panToggle: [event: Event]
-  replace: [event: Event]
+  rotate: [event: Event]
+  flipHorizontal: [event: Event]
+  flipVertical: [event: Event]
   remove: [event: Event]
   zoomIn: [event: Event]
   zoomOut: [event: Event]
@@ -18,25 +20,30 @@ defineEmits<{
 }>()
 
 const { t } = useI18n()
+
+const btn =
+  'inline-flex h-7 w-7 items-center justify-center rounded bg-black/60 p-0 text-white hover:bg-black/80'
+const btnDanger =
+  'inline-flex h-7 w-7 items-center justify-center rounded bg-black/60 p-0 text-white hover:bg-rose-700/90'
 </script>
 
 <template>
-  <!-- Cell chrome: row1 pan/replace/remove; row2 zoom out | percent | zoom in -->
+  <!-- Cell chrome: row1 pan/rotate/flips/remove; row2 zoom out | percent | zoom in -->
   <div
     class="absolute top-1 right-1 left-1 z-20 flex flex-col items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100"
     :class="selected ? '!opacity-100' : ''"
     @pointerdown.stop
     @click.stop
   >
-    <div class="flex gap-0.5">
+    <div class="flex flex-wrap justify-center gap-0.5">
       <button
         type="button"
-        class="rounded p-1.5 text-white transition"
-        :class="
+        :class="[
+          btn,
           panMode
-            ? 'bg-brand-solid ring-2 ring-brand ring-offset-1 ring-offset-black/40 hover:bg-brand-solid-hover'
-            : 'bg-black/60 hover:bg-black/80'
-        "
+            ? '!bg-brand-solid ring-2 ring-brand ring-offset-1 ring-offset-black/40 hover:!bg-brand-solid-hover'
+            : '',
+        ]"
         :title="t('collage.cellPanToggle')"
         :aria-label="t('collage.cellPanToggle')"
         :aria-pressed="panMode"
@@ -46,18 +53,36 @@ const { t } = useI18n()
       </button>
       <button
         type="button"
-        class="rounded bg-black/60 p-1.5 text-white hover:bg-black/80"
-        :title="t('collage.cellReplace')"
-        :aria-label="t('collage.cellReplace')"
-        @click="$emit('replace', $event)"
+        :class="btn"
+        :title="t('collage.cellRotateCw')"
+        :aria-label="t('collage.cellRotateCw')"
+        @click="$emit('rotate', $event)"
       >
-        <ImagePlus class="h-4 w-4" aria-hidden="true" />
+        <RotateCw class="h-4 w-4" aria-hidden="true" />
       </button>
       <button
         type="button"
-        class="rounded bg-black/60 p-1.5 text-white hover:bg-rose-700/90"
-        :title="t('collage.cellRemoveTitle')"
-        :aria-label="t('collage.cellRemoveTitle')"
+        :class="btn"
+        :title="t('collage.cellFlipHorizontal')"
+        :aria-label="t('collage.cellFlipHorizontal')"
+        @click="$emit('flipHorizontal', $event)"
+      >
+        <FlipHorizontal class="h-4 w-4" aria-hidden="true" />
+      </button>
+      <button
+        type="button"
+        :class="btn"
+        :title="t('collage.cellFlipVertical')"
+        :aria-label="t('collage.cellFlipVertical')"
+        @click="$emit('flipVertical', $event)"
+      >
+        <FlipVertical class="h-4 w-4" aria-hidden="true" />
+      </button>
+      <button
+        type="button"
+        :class="btnDanger"
+        :title="t('collage.cellRemove')"
+        :aria-label="t('collage.cellRemove')"
         @click="$emit('remove', $event)"
       >
         <Trash class="h-4 w-4" aria-hidden="true" />
@@ -66,7 +91,7 @@ const { t } = useI18n()
     <div class="flex items-center gap-0.5">
       <button
         type="button"
-        class="rounded bg-black/60 p-1.5 text-white hover:bg-black/80"
+        :class="btn"
         :title="t('collage.cellZoomOut')"
         :aria-label="t('collage.cellZoomOut')"
         @click="$emit('zoomOut', $event)"
@@ -75,7 +100,7 @@ const { t } = useI18n()
       </button>
       <button
         type="button"
-        class="min-w-[2.75rem] rounded bg-black/60 px-1.5 py-1 text-center text-[11px] font-semibold tabular-nums text-white hover:bg-black/80"
+        class="inline-flex h-7 min-w-[2.75rem] items-center justify-center rounded bg-black/60 px-1.5 text-center text-[11px] font-semibold leading-none tabular-nums text-white hover:bg-black/80"
         :title="t('collage.cellZoomReset')"
         :aria-label="`${t('collage.cellZoomReset')} ${scalePercent}%`"
         @click="$emit('zoomReset', $event)"
@@ -84,7 +109,7 @@ const { t } = useI18n()
       </button>
       <button
         type="button"
-        class="rounded bg-black/60 p-1.5 text-white hover:bg-black/80"
+        :class="btn"
         :title="t('collage.cellZoomIn')"
         :aria-label="t('collage.cellZoomIn')"
         @click="$emit('zoomIn', $event)"

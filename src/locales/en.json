@@ -16,7 +16,6 @@
     "selectedCell": "Cell {n} selected",
     "pageDropTitle": "Drop to upload",
     "pageDropHint": "Empty cells fill in order",
-    "cellReplace": "Replace",
     "collapseLeft": "Collapse left panel",
     "expandLeft": "Expand left panel",
     "collapseRight": "Collapse right panel",
@@ -67,7 +66,6 @@
     "exportClipboardFallback": "Clipboard unavailable — PNG downloaded",
     "exportFailed": "Export failed",
     "cellRemove": "Remove",
-    "cellRemoveTitle": "Remove image from this cell (layout unchanged)",
     "aspectCommon": "Common ratios",
     "aspectPrint": "Print sizes",
     "watermarkMode": "Watermark mode",
@@ -105,7 +103,10 @@
     "collapseAllGroups": "Collapse all layout groups",
     "favorites": "Favorites",
     "favoriteLayout": "Add to favorites",
-    "unfavoriteLayout": "Remove from favorites"
+    "unfavoriteLayout": "Remove from favorites",
+    "cellRotateCw": "Rotate 90°",
+    "cellFlipHorizontal": "Flip horizontal",
+    "cellFlipVertical": "Flip vertical"
   },
   "customLayout": {
     "backToCollage": "Back to collage",

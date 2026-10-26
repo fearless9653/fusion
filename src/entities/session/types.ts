@@ -56,10 +56,28 @@ export type CellImagePosition = {
 }
 
 export type CellImageAssignment = {
+  /**
+   * Original registry image id (never a bake).
+   * Display uses imageId (equals source when orientation is identity).
+   */
+  sourceImageId: string | null
+  /**
+   * Display registry id: source when no orientation bake, otherwise the bake.
+   * Preview/export draw this bitmap with identity rotate/flip.
+   */
   imageId: string | null
   position: CellImagePosition
   /** Extra zoom on top of cover-fit; default 1, clamp MIN–MAX. */
   scale: number
+  /**
+   * Logical clockwise rotation relative to sourceImageId (0 | 90 | 180 | 270).
+   * Accumulated for (re)bake; not applied as CSS/canvas transform on the display bitmap.
+   */
+  rotation: number
+  /** Logical mirror left-right relative to source (image space, before rotation). */
+  flipX: boolean
+  /** Logical mirror up-down relative to source (image space, before rotation). */
+  flipY: boolean
 }
 
 /** Which UI control owns the current aspect ratio (mutually exclusive). */
@@ -142,9 +160,13 @@ export function clampCellScale(scale: number | null | undefined): number {
 
 export function createEmptyCellImages(count: number): CellImageAssignment[] {
   return Array.from({ length: count }, () => ({
+    sourceImageId: null,
     imageId: null,
     position: { ...DEFAULT_CELL_POSITION },
     scale: DEFAULT_CELL_SCALE,
+    rotation: 0,
+    flipX: false,
+    flipY: false,
   }))
 }
 

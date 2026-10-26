@@ -1,4 +1,4 @@
-﻿# Fusion
+# Fusion
 
 本地拼图编辑器 — 选图、排版、样式、水印与导出，全在浏览器完成。
 
@@ -15,7 +15,7 @@
 
 **核心**
 
-- 主拼贴工作台：内置布局目录、单元格填图 / 替换、平移缩放、拖拽交换
+- 主拼贴工作台：内置布局目录、单元格填图、平移缩放、旋转 / 镜像（eager bake）、拖拽交换
 - 样式：间距、圆角、四边边框、背景色 / 背景图、画幅比例（常见比、打印尺寸、自定义）
 - 水印：开关、文案、字号、透明度、旋转、平铺 / 单点位置
 - 导出：高清 / 标准 JPG、PNG；剪贴板复制（失败时回退下载）
@@ -60,7 +60,7 @@ pnpm preview
 - Vue 3 · TypeScript · Vite
 - Vue Router · Pinia · Tailwind CSS v4（品牌色 emerald）
 - vue-i18n · Zod · Lucide
-- Web Worker 解码图片 · Canvas 自绘导出
+- Web Worker 解码 / 方向 bake · Canvas 自绘导出
 - ESLint · Prettier · Vitest · Husky · GitHub Actions CI · pnpm
 
 ## 目录结构

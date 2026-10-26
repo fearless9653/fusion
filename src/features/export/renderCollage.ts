@@ -57,8 +57,9 @@ function qualityMime(style: CollageStyle): {
 }
 
 /**
- * Cover-fit an image into a destination rect using object-position percentages (0–100),
- * then apply an extra `imageScale` (1 = plain cover). Shared by preview math + export.
+ * Cover-fit an image into a destination rect using object-position percentages (0-100),
+ * then apply an extra imageScale (1 = plain cover).
+ * Display bitmaps are eager-baked; callers pass identity orientation.
  */
 export function drawCoverImage(
   ctx: CanvasRenderingContext2D,
@@ -74,8 +75,8 @@ export function drawCoverImage(
   imageScale: number = 1,
 ): void {
   if (srcW <= 0 || srcH <= 0 || dw <= 0 || dh <= 0) return
-  const cover = Math.max(dw / srcW, dh / srcH)
   const zoom = Number.isFinite(imageScale) && imageScale > 0 ? imageScale : 1
+  const cover = Math.max(dw / srcW, dh / srcH)
   const scale = cover * zoom
   const drawW = srcW * scale
   const drawH = srcH * scale

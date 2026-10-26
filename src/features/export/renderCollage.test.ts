@@ -25,6 +25,7 @@ function mockCtx() {
     drawImage: vi.fn(),
     translate: vi.fn(),
     rotate: vi.fn(),
+    scale: vi.fn(),
     fillStyle: '',
     globalAlpha: 1,
     font: '',

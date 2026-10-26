@@ -46,15 +46,21 @@ export function useCellPointerInteractions(options: {
     return clampCellScale(collage.cellImages[index]?.scale)
   }
 
-  /** Cover × scale × position: transform scale around object-position origin. */
+  /**
+   * Cover × scale × position only.
+   * Orientation is eager-baked into the display bitmap — no CSS rotate/flip/cqw.
+   */
   function imagePreviewStyle(index: number): Record<string, string> {
     const p = positionFor(index)
     const s = scaleFor(index)
-    return {
-      objectPosition: `${p.x}% ${p.y}%`,
-      transform: s === 1 ? 'none' : `scale(${s})`,
-      transformOrigin: `${p.x}% ${p.y}%`,
+    const style: Record<string, string> = {
+      objectPosition: p.x + '% ' + p.y + '%',
+      transformOrigin: p.x + '% ' + p.y + '%',
     }
+    if (s !== 1) {
+      style.transform = 'scale(' + s + ')'
+    }
+    return style
   }
 
   function startPan(event: PointerEvent, index: number): void {
@@ -87,10 +93,10 @@ export function useCellPointerInteractions(options: {
     if (!panDrag.value) return false
     const dx = event.clientX - panDrag.value.startX
     const dy = event.clientY - panDrag.value.startY
-    // Invert delta: object-position % moves opposite to content — drag should follow finger
+    // Invert delta: object-position % moves opposite to content — drag should follow finger.
+    // Display bitmap is identity-oriented, so screen deltas map 1:1 (no rotate/flip remap).
     livePan[panDrag.value.index] = {
       x: clamp(panDrag.value.originX - dx * 0.15, 0, 100),
-      // Vertical factor slightly higher so up/down feels at least as responsive as left/right
       y: clamp(panDrag.value.originY - dy * 0.22, 0, 100),
     }
     return true
@@ -167,6 +173,24 @@ export function useCellPointerInteractions(options: {
     collage.setCellScale(index, DEFAULT_CELL_SCALE)
   }
 
+  function rotateCw(event: Event, index: number): void {
+    event.stopPropagation()
+    event.preventDefault()
+    void collage.rotateCellImageCw(index)
+  }
+
+  function flipHorizontal(event: Event, index: number): void {
+    event.stopPropagation()
+    event.preventDefault()
+    void collage.flipCellImageX(index)
+  }
+
+  function flipVertical(event: Event, index: number): void {
+    event.stopPropagation()
+    event.preventDefault()
+    void collage.flipCellImageY(index)
+  }
+
   onMounted(() => {
     window.addEventListener('keydown', onKeyDown)
   })
@@ -189,5 +213,8 @@ export function useCellPointerInteractions(options: {
     zoomIn,
     zoomOut,
     zoomReset,
+    rotateCw,
+    flipHorizontal,
+    flipVertical,
   }
 }

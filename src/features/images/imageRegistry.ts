@@ -1,6 +1,12 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
+import {
+  cellTransformsEqual,
+  toCanonicalCellTransform,
+  type CellImageTransform,
+} from '@/entities/session'
 import { decodeImage } from '@/shared/workers'
+import { bakeOrientedImage, isIdentityOrientation } from './bakeOrientedImage'
 
 export type RegisteredImage = {
   id: string
@@ -12,13 +18,23 @@ export type RegisteredImage = {
   width: number
   height: number
   mimeType: string
+  /**
+   * When set, this entry is an orientation bake of another registry image.
+   * Removing the source cascades to all derived bakes.
+   */
+  derivedFromId: string | null
+  /**
+   * Canonical orientation baked into this entry (flipY always false).
+   * Null for originals.
+   */
+  bakeTransform: CellImageTransform | null
 }
 
 let idSeq = 0
 
 function nextImageId(): string {
   idSeq += 1
-  return `img_${Date.now().toString(36)}_${idSeq}`
+  return 'img_' + Date.now().toString(36) + '_' + idSeq
 }
 
 /**
@@ -39,6 +55,26 @@ export const useImageRegistry = defineStore('imageRegistry', () => {
 
   function select(id: string | null): void {
     selectedImageId.value = id
+  }
+
+  function put(entry: RegisteredImage): void {
+    const next = new Map(images.value)
+    next.set(entry.id, entry)
+    images.value = next
+  }
+
+  function disposeEntry(entry: RegisteredImage): void {
+    URL.revokeObjectURL(entry.objectUrl)
+    entry.bitmap?.close?.()
+  }
+
+  /** Ids of orientation bakes derived from sourceId (not including source). */
+  function derivedIdsOf(sourceId: string): string[] {
+    const ids: string[] = []
+    for (const entry of images.value.values()) {
+      if (entry.derivedFromId === sourceId) ids.push(entry.id)
+    }
+    return ids
   }
 
   async function addFile(file: File): Promise<RegisteredImage> {
@@ -67,10 +103,10 @@ export const useImageRegistry = defineStore('imageRegistry', () => {
         width,
         height,
         mimeType: file.type || 'image/*',
+        derivedFromId: null,
+        bakeTransform: null,
       }
-      const next = new Map(images.value)
-      next.set(entry.id, entry)
-      images.value = next
+      put(entry)
       return entry
     } finally {
       loadingCount.value = Math.max(0, loadingCount.value - 1)
@@ -86,12 +122,88 @@ export const useImageRegistry = defineStore('imageRegistry', () => {
     return added
   }
 
+  /** Find an existing bake of sourceId with the same canonical orientation. */
+  function findDerivedBake(
+    sourceId: string,
+    transform: Partial<CellImageTransform> | null | undefined,
+  ): RegisteredImage | undefined {
+    const canonical = toCanonicalCellTransform(transform)
+    for (const entry of images.value.values()) {
+      if (
+        entry.derivedFromId === sourceId &&
+        entry.bakeTransform &&
+        cellTransformsEqual(entry.bakeTransform, canonical)
+      ) {
+        return entry
+      }
+    }
+    return undefined
+  }
+
+  /**
+   * Create one orientation bake of sourceId, or reuse an existing derived with
+   * the same source + canonical orientation. Always bakes from the original.
+   */
+  async function addBakedFrom(
+    sourceId: string,
+    transform: Partial<CellImageTransform> | null | undefined,
+  ): Promise<RegisteredImage> {
+    const canonical = toCanonicalCellTransform(transform)
+    if (isIdentityOrientation(canonical)) {
+      throw new Error('Refusing identity bake; use the source image id')
+    }
+    const existing = findDerivedBake(sourceId, canonical)
+    if (existing) return existing
+    const source = images.value.get(sourceId)
+    if (!source) throw new Error('Source image not found: ' + sourceId)
+    if (source.derivedFromId) {
+      throw new Error('Cannot bake from an already-derived image; use the original source')
+    }
+    loadingCount.value += 1
+    try {
+      const baked = await bakeOrientedImage(
+        {
+          bitmap: source.bitmap,
+          objectUrl: source.objectUrl,
+          width: source.width,
+          height: source.height,
+        },
+        canonical,
+      )
+      const objectUrl = URL.createObjectURL(baked.blob)
+      const entry: RegisteredImage = {
+        id: nextImageId(),
+        name: source.name + ' (oriented)',
+        objectUrl,
+        bitmap: baked.bitmap,
+        width: baked.width,
+        height: baked.height,
+        mimeType: baked.mimeType,
+        derivedFromId: sourceId,
+        bakeTransform: canonical,
+      }
+      put(entry)
+      return entry
+    } finally {
+      loadingCount.value = Math.max(0, loadingCount.value - 1)
+    }
+  }
+
   function remove(id: string): void {
     const entry = images.value.get(id)
     if (!entry) return
-    URL.revokeObjectURL(entry.objectUrl)
-    entry.bitmap?.close?.()
+    // Cascade: removing a source deletes all of its orientation bakes.
+    const cascadeIds = entry.derivedFromId ? [] : derivedIdsOf(id)
     const next = new Map(images.value)
+    for (const bakeId of cascadeIds) {
+      const bake = next.get(bakeId)
+      if (bake) {
+        disposeEntry(bake)
+        next.delete(bakeId)
+        if (selectedImageId.value === bakeId) selectedImageId.value = null
+      }
+    }
+    disposeEntry(entry)
     next.delete(id)
     images.value = next
     if (selectedImageId.value === id) {
@@ -101,8 +213,7 @@ export const useImageRegistry = defineStore('imageRegistry', () => {
 
   function clear(): void {
     for (const entry of images.value.values()) {
-      URL.revokeObjectURL(entry.objectUrl)
-      entry.bitmap?.close?.()
+      disposeEntry(entry)
     }
     images.value = new Map()
     selectedImageId.value = null
@@ -123,6 +234,9 @@ export const useImageRegistry = defineStore('imageRegistry', () => {
     select,
     addFile,
     addFiles,
+    addBakedFrom,
+    findDerivedBake,
+    derivedIdsOf,
     remove,
     clear,
     reset,
@@ -130,7 +244,7 @@ export const useImageRegistry = defineStore('imageRegistry', () => {
 })
 
 function entryFallbackName(): string {
-  return `image_${idSeq}`
+  return 'image_' + idSeq
 }
 
 function probeImageSize(url: string): Promise<{ width: number; height: number }> {

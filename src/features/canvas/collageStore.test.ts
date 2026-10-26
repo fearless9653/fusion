@@ -1,11 +1,16 @@
 import { createPinia, setActivePinia } from 'pinia'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { getTemplate } from '@/entities/layout'
-import { useCollageStore } from './collageStore'
+import { setOrientationBakeCoalesceMsForTests, useCollageStore } from './collageStore'
 
 describe('useCollageStore', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
+    setOrientationBakeCoalesceMsForTests(0)
+  })
+
+  afterEach(() => {
+    setOrientationBakeCoalesceMsForTests(null)
   })
 
   it('sets layout and resizes cell image slots', () => {
@@ -150,6 +155,7 @@ describe('useCollageStore', () => {
     store.setCellScale(0, 1.5)
     store.clearCellImage(0)
     expect(store.cellImages[0]?.imageId).toBeNull()
+    expect(store.cellImages[0]?.sourceImageId).toBeNull()
     expect(store.cellImages[0]?.position).toEqual({ x: 20, y: 80 })
     expect(store.cellImages[0]?.scale).toBeCloseTo(1.5)
     store.undo()
@@ -167,7 +173,7 @@ describe('useCollageStore', () => {
     store.panCell(0, { x: 10, y: 90 })
     store.setCellScale(1, 1.4)
     store.clearAllCellImages()
-    expect(store.cellImages.every((c) => c.imageId === null)).toBe(true)
+    expect(store.cellImages.every((c) => c.imageId === null && c.sourceImageId === null)).toBe(true)
     expect(store.cellImages[0]?.position).toEqual({ x: 10, y: 90 })
     expect(store.cellImages[1]?.scale).toBeCloseTo(1.4)
     expect(store.layout?.id).toBe(layout.id)
@@ -176,5 +182,70 @@ describe('useCollageStore', () => {
     store.undo()
     expect(store.cellImages[0]?.imageId).toBe('img_a')
     expect(store.cellImages[1]?.imageId).toBe('img_b')
+  })
+
+  it('assigns sourceImageId alongside imageId', () => {
+    const store = useCollageStore()
+    store.setLayout(getTemplate('tpl_single')!)
+    store.assignImage(0, 'img_a')
+    expect(store.cellImages[0]?.sourceImageId).toBe('img_a')
+    expect(store.cellImages[0]?.imageId).toBe('img_a')
+  })
+
+  it('rotates and flips a cell with undo (canonical flipY)', async () => {
+    const store = useCollageStore()
+    store.setLayout(getTemplate('tpl_single')!)
+    store.assignImage(0, 'img_a')
+    expect(store.cellImages[0]?.rotation).toBe(0)
+    expect(store.cellImages[0]?.flipX).toBe(false)
+    expect(store.cellImages[0]?.flipY).toBe(false)
+    await store.rotateCellImageCw(0)
+    expect(store.cellImages[0]?.rotation).toBe(90)
+    expect(store.cellImages[0]?.sourceImageId).toBe('img_a')
+    // Without a real registry bitmap, display stays on source id (stub-safe).
+    expect(store.cellImages[0]?.imageId).toBe('img_a')
+    await store.rotateCellImageCw(0)
+    expect(store.cellImages[0]?.rotation).toBe(180)
+    await store.flipCellImageX(0)
+    expect(store.cellImages[0]?.flipX).toBe(true)
+    expect(store.cellImages[0]?.flipY).toBe(false)
+    // flipY is canonicalized: (180, flipX) + flipY → identity
+    await store.flipCellImageY(0)
+    expect(store.cellImages[0]?.rotation).toBe(0)
+    expect(store.cellImages[0]?.flipX).toBe(false)
+    expect(store.cellImages[0]?.flipY).toBe(false)
+    store.undo()
+    expect(store.cellImages[0]?.rotation).toBe(180)
+    expect(store.cellImages[0]?.flipX).toBe(true)
+    store.undo()
+    expect(store.cellImages[0]?.flipX).toBe(false)
+    store.undo()
+    expect(store.cellImages[0]?.rotation).toBe(90)
+  })
+
+  it('clearCellImage resets orientation transforms and clears source', async () => {
+    const store = useCollageStore()
+    store.setLayout(getTemplate('tpl_single')!)
+    store.assignImage(0, 'img_a')
+    await store.rotateCellImageCw(0)
+    await store.flipCellImageX(0)
+    store.clearCellImage(0)
+    expect(store.cellImages[0]?.imageId).toBeNull()
+    expect(store.cellImages[0]?.sourceImageId).toBeNull()
+    expect(store.cellImages[0]?.rotation).toBe(0)
+    expect(store.cellImages[0]?.flipX).toBe(false)
+    expect(store.cellImages[0]?.flipY).toBe(false)
+  })
+
+  it('clearAllCellImages resets orientation on every cell', async () => {
+    const store = useCollageStore()
+    store.setLayout(getTemplate('tpl_split_h')!)
+    store.assignImage(0, 'img_a')
+    store.assignImage(1, 'img_b')
+    await store.rotateCellImageCw(0)
+    await store.flipCellImageY(1)
+    store.clearAllCellImages()
+    expect(store.cellImages.every((c) => c.imageId === null && c.sourceImageId === null)).toBe(true)
+    expect(store.cellImages.every((c) => c.rotation === 0 && !c.flipX && !c.flipY)).toBe(true)
   })
 })
