@@ -153,10 +153,16 @@ function swapAspect(): void {
     return
   }
 
-  // custom: swap applied ratio + sync both inputs; empty draft → no-op
-  if (!isValidPositiveAspect(customW.value) || !isValidPositiveAspect(customH.value)) return
-  const w = customW.value
-  const h = customH.value
+  // custom: swap draft inputs when present; otherwise flip applied store ratio
+  if (isValidPositiveAspect(customW.value) && isValidPositiveAspect(customH.value)) {
+    const w = customW.value
+    const h = customH.value
+    customW.value = h
+    customH.value = w
+    collage.setAspectRatio(h, w, null, 'custom')
+    return
+  }
+  const { width: w, height: h } = style.value.aspectRatio
   customW.value = h
   customH.value = w
   collage.setAspectRatio(h, w, null, 'custom')
@@ -339,49 +345,50 @@ async function onCopy(): Promise<void> {
             {{ t('collage.aspectCustom') }}
           </div>
           <div class="space-y-2.5">
-            <label class="flex flex-col gap-1 text-xs text-ink-muted">
-              {{ t('collage.width') }}
+            <label class="flex items-center gap-2 text-xs text-ink-muted">
+              <span class="w-6 shrink-0">{{ t('collage.width') }}</span>
               <input
                 v-model.number="customW"
                 type="number"
                 min="1"
-                class="box-border h-9 w-full rounded-md border border-border bg-surface px-2 text-sm leading-none text-ink"
+                class="box-border h-9 min-w-0 flex-1 rounded-md border border-border bg-surface px-2 text-sm leading-none text-ink"
               />
             </label>
-            <label class="flex flex-col gap-1 text-xs text-ink-muted">
-              {{ t('collage.height') }}
+            <label class="flex items-center gap-2 text-xs text-ink-muted">
+              <span class="w-6 shrink-0">{{ t('collage.height') }}</span>
               <input
                 v-model.number="customH"
                 type="number"
                 min="1"
-                class="box-border h-9 w-full rounded-md border border-border bg-surface px-2 text-sm leading-none text-ink"
+                class="box-border h-9 min-w-0 flex-1 rounded-md border border-border bg-surface px-2 text-sm leading-none text-ink"
               />
             </label>
-            <div class="flex items-stretch gap-2.5">
-              <button
-                type="button"
-                class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border bg-surface text-ink-muted hover:bg-brand/10 hover:text-brand-fg"
-                :title="t('collage.aspectSwap')"
-                :aria-label="t('collage.aspectSwap')"
-                @click="swapAspect"
-              >
-                <ArrowLeftRight class="h-4 w-4" aria-hidden="true" />
-              </button>
-              <button
-                type="button"
-                class="inline-flex h-9 min-w-0 flex-1 items-center justify-center rounded-md border px-3 text-xs font-medium"
-                :class="
-                  style.aspectSource === 'custom'
-                    ? 'border-brand bg-brand/10 text-brand-fg'
-                    : 'border-border bg-surface text-ink-muted hover:bg-brand/10 hover:text-brand-fg'
-                "
-                :disabled="!canApplyCustomAspect"
-                @click="applyCustomAspect"
-              >
-                {{ t('collage.apply') }}
-              </button>
-            </div>
+            <button
+              type="button"
+              class="inline-flex h-9 w-full items-center justify-center rounded-md border px-3 text-xs font-medium"
+              :class="
+                style.aspectSource === 'custom'
+                  ? 'border-brand bg-brand/10 text-brand-fg'
+                  : 'border-border bg-surface text-ink-muted hover:bg-brand/10 hover:text-brand-fg'
+              "
+              :disabled="!canApplyCustomAspect"
+              @click="applyCustomAspect"
+            >
+              {{ t('collage.apply') }}
+            </button>
           </div>
+        </div>
+        <div class="border-t border-border pt-3">
+          <button
+            type="button"
+            class="inline-flex w-full items-center justify-center gap-2 rounded-md bg-brand-solid px-3 py-2 text-sm font-medium text-white hover:bg-brand-solid-hover"
+            :title="t('collage.aspectSwap')"
+            :aria-label="t('collage.aspectSwap')"
+            @click="swapAspect"
+          >
+            <ArrowLeftRight class="h-4 w-4" aria-hidden="true" />
+            <span>{{ t('collage.aspectSwap') }}</span>
+          </button>
         </div>
       </PanelSection>
 
@@ -629,8 +636,14 @@ async function onCopy(): Promise<void> {
           </div>
         </div>
       </PanelSection>
+    </div>
 
-      <PanelSection :title="t('collage.export')">
+    <footer
+      class="shrink-0 border-t border-border bg-surface px-3 py-3"
+      :aria-label="t('collage.export')"
+    >
+      <div class="mb-2 text-sm font-semibold text-ink">{{ t('collage.export') }}</div>
+      <div class="space-y-2">
         <div class="grid grid-cols-3 gap-1">
           <button
             v-for="opt in qualityOptions"
@@ -663,7 +676,7 @@ async function onCopy(): Promise<void> {
         >
           {{ t('collage.copyClipboard') }}
         </button>
-      </PanelSection>
-    </div>
+      </div>
+    </footer>
   </section>
 </template>

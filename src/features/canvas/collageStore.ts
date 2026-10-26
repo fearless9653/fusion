@@ -172,6 +172,16 @@ export const useCollageStore = defineStore('collage', () => {
     assignImage(cellIndex, null)
   }
 
+  /** Clear image assignments on every cell; layout / aspect / style / watermark unchanged. */
+  function clearAllCellImages(): void {
+    if (!session.value.cellImages.some((c) => c.imageId !== null)) return
+    patchPresent((draft) => {
+      for (const cell of draft.cellImages) {
+        cell.imageId = null
+      }
+    })
+  }
+
   function swapCells(a: number, b: number): void {
     patchPresent((draft) => {
       if (a < 0 || b < 0 || a >= draft.cellImages.length || b >= draft.cellImages.length) {
@@ -309,6 +319,7 @@ export const useCollageStore = defineStore('collage', () => {
     setDownloadQuality,
     assignImage,
     clearCellImage,
+    clearAllCellImages,
     swapCells,
     panCell,
     setCellScale,

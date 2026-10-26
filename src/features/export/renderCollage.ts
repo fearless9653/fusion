@@ -284,8 +284,13 @@ export async function copyBlobToClipboard(blob: Blob): Promise<boolean> {
 }
 
 export function exportFilename(extension: 'jpg' | 'png'): string {
-  const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
-  return `collage-${stamp}.${extension}`
+  const now = new Date()
+  const pad = (n: number): string => String(n).padStart(2, '0')
+  const stamp =
+    `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}` +
+    `${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`
+  const unique = crypto.randomUUID().slice(0, 8)
+  return `fusion-${stamp}-${unique}.${extension}`
 }
 
 /** JPEG quality for toBlob based on downloadQuality. */

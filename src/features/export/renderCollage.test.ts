@@ -96,7 +96,7 @@ describe('export helpers', () => {
   it('picks jpeg quality and filename extension', () => {
     expect(jpegQualityFor({ ...DEFAULT_STYLE, downloadQuality: 'png' })).toBeUndefined()
     expect(jpegQualityFor({ ...DEFAULT_STYLE, downloadQuality: 'high-jpg' })).toBe(0.92)
-    expect(exportFilename('png')).toMatch(/^collage-.*\.png$/)
+    expect(exportFilename('png')).toMatch(/^fusion-\d{14}-[0-9a-f]{8}\.png$/i)
   })
 })
 

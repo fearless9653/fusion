@@ -24,6 +24,7 @@ import {
   normalizeFractions,
   redistributeAdjacent,
 } from '@/shared/lib'
+import { showToast } from '@/shared/ui'
 
 const NUDGE = 2
 const GUTTER_HIT = 8
@@ -49,6 +50,14 @@ const liveColFractions = ref<number[] | null>(null)
 
 /** Ephemeral UI: pan vs swap/default drag (not in undo history). */
 const panMode = ref(false)
+
+const hasAnyCellImage = computed(() => collage.cellImages.some((c) => c.imageId !== null))
+
+function clearAllImages(): void {
+  if (!hasAnyCellImage.value) return
+  collage.clearAllCellImages()
+  showToast(t('collage.clearAllImagesDone'), 'info')
+}
 
 const dragSwap = ref<{ from: number } | null>(null)
 const panDrag = ref<{
@@ -371,7 +380,8 @@ function onPointerMove(event: PointerEvent): void {
   // Invert delta: object-position % moves opposite to content — drag should follow finger
   livePan[panDrag.value.index] = {
     x: clamp(panDrag.value.originX - dx * 0.15, 0, 100),
-    y: clamp(panDrag.value.originY - dy * 0.15, 0, 100),
+    // Vertical factor slightly higher so up/down feels at least as responsive as left/right
+    y: clamp(panDrag.value.originY - dy * 0.22, 0, 100),
   }
 }
 
@@ -524,6 +534,18 @@ onUnmounted(() => {
       class="hidden"
       @change="onCellFilesSelected"
     />
+    <div class="flex shrink-0 items-center justify-end gap-2 px-2 pt-1">
+      <button
+        type="button"
+        class="rounded-md border border-border bg-surface px-2.5 py-1.5 text-xs font-medium text-ink-muted hover:bg-rose-500/10 hover:text-rose-600 disabled:opacity-40"
+        :disabled="!hasAnyCellImage"
+        :title="t('collage.clearAllImages')"
+        :aria-label="t('collage.clearAllImages')"
+        @click="clearAllImages"
+      >
+        {{ t('collage.clearAllImages') }}
+      </button>
+    </div>
     <div
       ref="stageEl"
       class="flex min-h-0 flex-1 items-center justify-center overflow-hidden px-2 py-6"
