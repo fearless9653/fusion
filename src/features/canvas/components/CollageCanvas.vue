@@ -563,13 +563,8 @@ onUnmounted(() => {
               <div
                 v-for="(cell, index) in layout.cells"
                 :key="index"
-                class="group relative min-h-0 min-w-0 overflow-hidden bg-slate-200 outline-offset-[-2px] transition"
-                :class="[
-                  panMode && cellHasImage(index) ? 'cursor-move' : 'cursor-pointer',
-                  collage.selectedCellIndex === index
-                    ? 'outline outline-2 outline-brand'
-                    : 'outline outline-1 outline-transparent hover:outline-brand',
-                ]"
+                class="group relative min-h-0 min-w-0 overflow-hidden bg-slate-200 transition"
+                :class="panMode && cellHasImage(index) ? 'cursor-move' : 'cursor-pointer'"
                 :style="{
                   ...cellGridStyle(cell),
                   borderRadius: `${style.radius}px`,
@@ -626,6 +621,16 @@ onUnmounted(() => {
                     </svg>
                   </div>
                 </div>
+                <!-- Above scaled img (transform stacking covers ancestor outline); below CellChrome z-20 -->
+                <div
+                  class="pointer-events-none absolute inset-0 z-[15] rounded-[inherit] ring-inset transition"
+                  :class="
+                    collage.selectedCellIndex === index
+                      ? 'ring-2 ring-brand'
+                      : 'ring-1 ring-transparent group-hover:ring-brand'
+                  "
+                  aria-hidden="true"
+                />
                 <CellChrome
                   v-if="cellHasImage(index)"
                   :selected="collage.selectedCellIndex === index"
