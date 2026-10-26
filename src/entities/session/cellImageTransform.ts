@@ -74,6 +74,51 @@ export function toCanonicalCellTransform(
   return { rotation, flipX, flipY: false }
 }
 
+/**
+ * Whether a quarter-turn swaps screen axes relative to image-local flip axes.
+ * Bake is flip-then-rotate, so after 90°/270° a local flipX appears vertical on
+ * screen (and local flipY appears horizontal).
+ */
+function rotationSwapsScreenFlipAxes(rotation: CellRotationDeg): boolean {
+  return rotation === 90 || rotation === 270
+}
+
+/**
+ * Toggle screen-space horizontal mirror (left-right on screen / 左右).
+ * Maps through current rotation onto image-local flipX/flipY (pre-rotate bake).
+ */
+export function flipCellHorizontalScreen(
+  partial?: {
+    rotation?: number | null
+    flipX?: boolean | null
+    flipY?: boolean | null
+  } | null,
+): CellImageTransform {
+  const current = resolveCellTransform(partial)
+  if (rotationSwapsScreenFlipAxes(current.rotation)) {
+    return { ...current, flipY: !current.flipY }
+  }
+  return { ...current, flipX: !current.flipX }
+}
+
+/**
+ * Toggle screen-space vertical mirror (up-down on screen / 上下).
+ * Maps through current rotation onto image-local flipX/flipY (pre-rotate bake).
+ */
+export function flipCellVerticalScreen(
+  partial?: {
+    rotation?: number | null
+    flipX?: boolean | null
+    flipY?: boolean | null
+  } | null,
+): CellImageTransform {
+  const current = resolveCellTransform(partial)
+  if (rotationSwapsScreenFlipAxes(current.rotation)) {
+    return { ...current, flipX: !current.flipX }
+  }
+  return { ...current, flipY: !current.flipY }
+}
+
 /** Structural equality for orientation (after caller canonicalizes if needed). */
 export function cellTransformsEqual(
   a?: {

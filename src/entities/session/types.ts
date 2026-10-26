@@ -74,9 +74,15 @@ export type CellImageAssignment = {
    * Accumulated for (re)bake; not applied as CSS/canvas transform on the display bitmap.
    */
   rotation: number
-  /** Logical mirror left-right relative to source (image space, before rotation). */
+  /**
+   * Image-space mirror left-right relative to source (applied before rotation in bake).
+   * UI 左右 / flip-horizontal buttons compose in screen space via flipCellHorizontalScreen.
+   */
   flipX: boolean
-  /** Logical mirror up-down relative to source (image space, before rotation). */
+  /**
+   * Image-space mirror up-down relative to source (applied before rotation in bake).
+   * UI 上下 / flip-vertical buttons compose in screen space via flipCellVerticalScreen.
+   */
   flipY: boolean
 }
 

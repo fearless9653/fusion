@@ -149,6 +149,27 @@ describe('useCollageStore eager orientation bake', () => {
     expect(registry.derivedIdsOf(sourceId)).toHaveLength(1)
   })
 
+  it('rotate90 then flipH bakes screen-horizontal (270+flipX), not local flipX@90', async () => {
+    const store = useCollageStore()
+    const registry = useImageRegistry()
+    store.setLayout(getTemplate('tpl_single')!)
+    const sourceId = seedSource()
+    store.assignImage(0, sourceId)
+
+    await store.rotateCellImageCw(0)
+    await store.flipCellImageX(0)
+    expect(store.cellImages[0]?.rotation).toBe(270)
+    expect(store.cellImages[0]?.flipX).toBe(true)
+    expect(store.cellImages[0]?.flipY).toBe(false)
+    const bakeId = store.cellImages[0]?.imageId
+    expect(bakeId).not.toBe(sourceId)
+    expect(registry.get(bakeId!)?.bakeTransform).toEqual({
+      rotation: 270,
+      flipX: true,
+      flipY: false,
+    })
+  })
+
   it('canonicalizes flipY into rotation×flipX and drops bake on identity', async () => {
     const store = useCollageStore()
     const registry = useImageRegistry()

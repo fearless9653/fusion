@@ -29,6 +29,8 @@ import {
   pushHistory,
   redoHistory,
   resolveCellTransform,
+  flipCellHorizontalScreen,
+  flipCellVerticalScreen,
   rotateCellCw,
   toCanonicalCellTransform,
   undoHistory,
@@ -107,6 +109,8 @@ export const useCollageStore = defineStore('collage', () => {
 
   /** Latest pending canonical orientation per cell (coalesce rapid clicks). */
   const pendingOrientationByCell = new Map<number, CellImageTransform>()
+  /** Target currently being baked (so mid-flight clicks compose from it, not stale session). */
+  const inflightOrientationByCell = new Map<number, CellImageTransform>()
   let coalesceTimer: ReturnType<typeof setTimeout> | null = null
   let coalesceWaiters: Array<{
     resolve: () => void
@@ -285,6 +289,7 @@ export const useCollageStore = defineStore('collage', () => {
     const previous = session.value.cellImages[cellIndex]
     if (!previous) return
     pendingOrientationByCell.delete(cellIndex)
+    inflightOrientationByCell.delete(cellIndex)
     const previousBakeId = cellBakeId(previous)
     const logical = toCanonicalCellTransform(previous)
     // Common path: no orientation bake — commit synchronously for UI/tests.
@@ -315,6 +320,7 @@ export const useCollageStore = defineStore('collage', () => {
   /** Clear image assignment; reset logical rotate/flip to defaults (pan/scale kept). */
   function clearCellImage(cellIndex: number): void {
     pendingOrientationByCell.delete(cellIndex)
+    inflightOrientationByCell.delete(cellIndex)
     patchPresent((draft) => {
       const cell = draft.cellImages[cellIndex]
       if (!cell) return
@@ -345,6 +351,7 @@ export const useCollageStore = defineStore('collage', () => {
       return
     }
     pendingOrientationByCell.clear()
+    inflightOrientationByCell.clear()
     patchPresent((draft) => {
       const bakeIds = new Set<string>()
       for (const cell of draft.cellImages) {
@@ -406,17 +413,28 @@ export const useCollageStore = defineStore('collage', () => {
         // A newer click may have re-queued this cell while we baked others.
         if (pendingOrientationByCell.has(cellIndex)) continue
         const current = session.value.cellImages[cellIndex]
-        if (!current) continue
+        if (!current) {
+          inflightOrientationByCell.delete(cellIndex)
+          continue
+        }
         const previousBakeId = cellBakeId(current)
         const draft = cloneSession(session.value)
         const cell = draft.cellImages[cellIndex]
-        if (!cell) continue
+        if (!cell) {
+          inflightOrientationByCell.delete(cellIndex)
+          continue
+        }
         if (!cell.sourceImageId && cell.imageId) cell.sourceImageId = cell.imageId
-        await applyOrientationToCell(cell, transform, {
-          previousBakeId,
-          sessionDraft: draft,
-        })
-        commit(draft)
+        inflightOrientationByCell.set(cellIndex, transform)
+        try {
+          await applyOrientationToCell(cell, transform, {
+            previousBakeId,
+            sessionDraft: draft,
+          })
+          commit(draft)
+        } finally {
+          inflightOrientationByCell.delete(cellIndex)
+        }
       }
     }
   }
@@ -456,6 +474,7 @@ export const useCollageStore = defineStore('collage', () => {
     if (!cell?.sourceImageId && !cell?.imageId) return Promise.resolve()
     const base =
       pendingOrientationByCell.get(cellIndex) ??
+      inflightOrientationByCell.get(cellIndex) ??
       toCanonicalCellTransform(resolveCellTransform(cell))
     const next = toCanonicalCellTransform(updater(base))
     pendingOrientationByCell.set(cellIndex, next)
@@ -470,20 +489,14 @@ export const useCollageStore = defineStore('collage', () => {
     }))
   }
 
-  /** Toggle horizontal mirror (left-right) relative to source; eager-bake. */
+  /** Toggle screen-space horizontal mirror (左右 / left-right on screen); eager-bake. */
   async function flipCellImageX(cellIndex: number): Promise<void> {
-    await queueCellOrientation(cellIndex, (current) => ({
-      ...current,
-      flipX: !current.flipX,
-    }))
+    await queueCellOrientation(cellIndex, (current) => flipCellHorizontalScreen(current))
   }
 
-  /** Toggle vertical mirror (up-down) relative to source; eager-bake. */
+  /** Toggle screen-space vertical mirror (上下 / up-down on screen); eager-bake. */
   async function flipCellImageY(cellIndex: number): Promise<void> {
-    await queueCellOrientation(cellIndex, (current) => ({
-      ...current,
-      flipY: !current.flipY,
-    }))
+    await queueCellOrientation(cellIndex, (current) => flipCellVerticalScreen(current))
   }
 
   /**
@@ -617,6 +630,13 @@ export const useCollageStore = defineStore('collage', () => {
 
   /** Replace history with a fresh default session (tests / hard reset). */
   function resetSession(): void {
+    pendingOrientationByCell.clear()
+    inflightOrientationByCell.clear()
+    if (coalesceTimer) {
+      clearTimeout(coalesceTimer)
+      coalesceTimer = null
+    }
+    coalesceWaiters = []
     history.value = createHistoryStack(createDefaultSessionState())
   }
 

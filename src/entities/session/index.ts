@@ -41,6 +41,8 @@ export {
   DEFAULT_CELL_ROTATION,
   DEFAULT_CELL_TRANSFORM,
   cellTransformsEqual,
+  flipCellHorizontalScreen,
+  flipCellVerticalScreen,
   isIdentityCellTransform,
   normalizeCellRotation,
   resolveCellTransform,

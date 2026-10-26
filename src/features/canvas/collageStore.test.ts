@@ -223,6 +223,35 @@ describe('useCollageStore', () => {
     expect(store.cellImages[0]?.rotation).toBe(90)
   })
 
+  it('rotate then flipH then rotate yields flipX (screen composition)', async () => {
+    const store = useCollageStore()
+    store.setLayout(getTemplate('tpl_single')!)
+    store.assignImage(0, 'img_a')
+    await store.rotateCellImageCw(0)
+    await store.flipCellImageX(0)
+    await store.rotateCellImageCw(0)
+    expect(store.cellImages[0]?.rotation).toBe(0)
+    expect(store.cellImages[0]?.flipX).toBe(true)
+    expect(store.cellImages[0]?.flipY).toBe(false)
+  })
+
+  it('after rotate 90° CW, flipH is screen-left-right (canonical 270+flipX)', async () => {
+    const store = useCollageStore()
+    store.setLayout(getTemplate('tpl_single')!)
+    store.assignImage(0, 'img_a')
+    await store.rotateCellImageCw(0)
+    expect(store.cellImages[0]?.rotation).toBe(90)
+    await store.flipCellImageX(0)
+    // Screen H after R90 ≡ local flipY → canonical (270, flipX)
+    expect(store.cellImages[0]?.rotation).toBe(270)
+    expect(store.cellImages[0]?.flipX).toBe(true)
+    expect(store.cellImages[0]?.flipY).toBe(false)
+    await store.flipCellImageX(0)
+    expect(store.cellImages[0]?.rotation).toBe(90)
+    expect(store.cellImages[0]?.flipX).toBe(false)
+    expect(store.cellImages[0]?.flipY).toBe(false)
+  })
+
   it('clearCellImage resets orientation transforms and clears source', async () => {
     const store = useCollageStore()
     store.setLayout(getTemplate('tpl_single')!)
