@@ -147,7 +147,7 @@ describe('useCollageStore', () => {
     expect(store.style.commonAspectId).toBe('1:1')
   })
 
-  it('clearCellImage removes assignment only', () => {
+  it('clearCellImage removes assignment and resets visual config', () => {
     const store = useCollageStore()
     store.setLayout(getTemplate('tpl_split_h')!)
     store.assignImage(0, 'img_a')
@@ -156,13 +156,16 @@ describe('useCollageStore', () => {
     store.clearCellImage(0)
     expect(store.cellImages[0]?.imageId).toBeNull()
     expect(store.cellImages[0]?.sourceImageId).toBeNull()
-    expect(store.cellImages[0]?.position).toEqual({ x: 20, y: 80 })
-    expect(store.cellImages[0]?.scale).toBeCloseTo(1.5)
+    expect(store.cellImages[0]?.position).toEqual({ x: 50, y: 50 })
+    expect(store.cellImages[0]?.scale).toBe(1)
+    expect(store.cellImages[0]?.rotation).toBe(0)
+    expect(store.cellImages[0]?.flipX).toBe(false)
+    expect(store.cellImages[0]?.flipY).toBe(false)
     store.undo()
     expect(store.cellImages[0]?.imageId).toBe('img_a')
   })
 
-  it('clearAllCellImages clears assignments without resetting layout or style', () => {
+  it('clearAllCellImages clears assignments and resets visual config without resetting layout or style', () => {
     const store = useCollageStore()
     const layout = getTemplate('tpl_split_h')!
     store.setLayout(layout)
@@ -174,8 +177,10 @@ describe('useCollageStore', () => {
     store.setCellScale(1, 1.4)
     store.clearAllCellImages()
     expect(store.cellImages.every((c) => c.imageId === null && c.sourceImageId === null)).toBe(true)
-    expect(store.cellImages[0]?.position).toEqual({ x: 10, y: 90 })
-    expect(store.cellImages[1]?.scale).toBeCloseTo(1.4)
+    expect(
+      store.cellImages.every((c) => c.position.x === 50 && c.position.y === 50 && c.scale === 1),
+    ).toBe(true)
+    expect(store.cellImages.every((c) => c.rotation === 0 && !c.flipX && !c.flipY)).toBe(true)
     expect(store.layout?.id).toBe(layout.id)
     expect(store.style.aspectRatio).toEqual({ width: 16, height: 9 })
     expect(store.style.spacing).toBe(12)
@@ -256,11 +261,15 @@ describe('useCollageStore', () => {
     const store = useCollageStore()
     store.setLayout(getTemplate('tpl_single')!)
     store.assignImage(0, 'img_a')
+    store.panCell(0, { x: 10, y: 90 })
+    store.setCellScale(0, 2)
     await store.rotateCellImageCw(0)
     await store.flipCellImageX(0)
     store.clearCellImage(0)
     expect(store.cellImages[0]?.imageId).toBeNull()
     expect(store.cellImages[0]?.sourceImageId).toBeNull()
+    expect(store.cellImages[0]?.position).toEqual({ x: 50, y: 50 })
+    expect(store.cellImages[0]?.scale).toBe(1)
     expect(store.cellImages[0]?.rotation).toBe(0)
     expect(store.cellImages[0]?.flipX).toBe(false)
     expect(store.cellImages[0]?.flipY).toBe(false)
@@ -271,10 +280,47 @@ describe('useCollageStore', () => {
     store.setLayout(getTemplate('tpl_split_h')!)
     store.assignImage(0, 'img_a')
     store.assignImage(1, 'img_b')
+    store.panCell(0, { x: 5, y: 95 })
+    store.setCellScale(1, 2.2)
     await store.rotateCellImageCw(0)
     await store.flipCellImageY(1)
     store.clearAllCellImages()
     expect(store.cellImages.every((c) => c.imageId === null && c.sourceImageId === null)).toBe(true)
     expect(store.cellImages.every((c) => c.rotation === 0 && !c.flipX && !c.flipY)).toBe(true)
+    expect(
+      store.cellImages.every((c) => c.position.x === 50 && c.position.y === 50 && c.scale === 1),
+    ).toBe(true)
+  })
+
+  it('setLayout remaps images by index and resets visual config', async () => {
+    const store = useCollageStore()
+    store.setLayout(getTemplate('tpl_split_h')!)
+    store.assignImage(0, 'img_a')
+    store.assignImage(1, 'img_b')
+    store.panCell(0, { x: 20, y: 80 })
+    store.setCellScale(0, 1.5)
+    store.panCell(1, { x: 10, y: 90 })
+    store.setCellScale(1, 2)
+    await store.rotateCellImageCw(0)
+    await store.flipCellImageX(1)
+    store.setLayout(getTemplate('tpl_grid_2x2')!)
+    expect(store.cellImages).toHaveLength(4)
+    expect(store.cellImages[0]?.sourceImageId).toBe('img_a')
+    expect(store.cellImages[0]?.imageId).toBe('img_a')
+    expect(store.cellImages[1]?.sourceImageId).toBe('img_b')
+    expect(store.cellImages[1]?.imageId).toBe('img_b')
+    expect(store.cellImages[2]?.imageId).toBeNull()
+    expect(store.cellImages[3]?.imageId).toBeNull()
+    expect(
+      store.cellImages.every(
+        (c) =>
+          c.position.x === 50 &&
+          c.position.y === 50 &&
+          c.scale === 1 &&
+          c.rotation === 0 &&
+          !c.flipX &&
+          !c.flipY,
+      ),
+    ).toBe(true)
   })
 })

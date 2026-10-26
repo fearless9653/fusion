@@ -23,6 +23,7 @@ export {
   createDefaultSessionState,
   createEmptyCellImages,
   createEqualFractions,
+  resetCellVisualConfig,
 } from './types'
 export type { HistoryStack } from './history'
 export {

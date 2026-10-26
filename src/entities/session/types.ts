@@ -164,16 +164,28 @@ export function clampCellScale(scale: number | null | undefined): number {
   return Math.min(MAX_CELL_SCALE, Math.max(MIN_CELL_SCALE, scale))
 }
 
+/** Reset pan / zoom / rotate / flip to defaults (does not touch image ids). */
+export function resetCellVisualConfig(cell: CellImageAssignment): void {
+  cell.position = { ...DEFAULT_CELL_POSITION }
+  cell.scale = DEFAULT_CELL_SCALE
+  cell.rotation = 0
+  cell.flipX = false
+  cell.flipY = false
+}
+
 export function createEmptyCellImages(count: number): CellImageAssignment[] {
-  return Array.from({ length: count }, () => ({
-    sourceImageId: null,
-    imageId: null,
-    position: { ...DEFAULT_CELL_POSITION },
-    scale: DEFAULT_CELL_SCALE,
-    rotation: 0,
-    flipX: false,
-    flipY: false,
-  }))
+  return Array.from({ length: count }, () => {
+    const cell: CellImageAssignment = {
+      sourceImageId: null,
+      imageId: null,
+      position: { ...DEFAULT_CELL_POSITION },
+      scale: DEFAULT_CELL_SCALE,
+      rotation: 0,
+      flipX: false,
+      flipY: false,
+    }
+    return cell
+  })
 }
 
 /** Equal track weights (`1` × n) for a fresh grid size. */

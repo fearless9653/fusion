@@ -19,10 +19,11 @@ import {
   clampCellScale,
   createEmptyCellImages,
   createEqualFractions,
+  resetCellVisualConfig,
   createHistoryStack,
-  DEFAULT_CELL_FLIP_X,
-  DEFAULT_CELL_FLIP_Y,
+  DEFAULT_CELL_POSITION,
   DEFAULT_CELL_ROTATION,
+  DEFAULT_CELL_SCALE,
   cellTransformsEqual,
   isIdentityCellTransform,
   normalizeCellRotation,
@@ -59,15 +60,33 @@ function normalizeCellAssignment(cell: CellImageAssignment): CellImageAssignment
   return next
 }
 
+/**
+ * Remap cell images by index onto a new slot count.
+ * Keeps source/display image ids only; visual config (pan/scale/rotate/flip) resets to defaults.
+ * When orientation had a bake, display returns to source and the bake id is returned for cleanup.
+ */
 function resizeCellImages(
   previous: CollageSessionState['cellImages'],
   count: number,
-): CollageSessionState['cellImages'] {
+): { cells: CollageSessionState['cellImages']; orphanBakeIds: string[] } {
   const next = createEmptyCellImages(count)
-  for (let i = 0; i < Math.min(previous.length, count); i += 1) {
-    next[i] = normalizeCellAssignment(previous[i]!)
+  const orphanBakeIds: string[] = []
+  const keep = Math.min(previous.length, count)
+  for (let i = 0; i < keep; i += 1) {
+    const prev = normalizeCellAssignment(previous[i]!)
+    const bakeId = cellBakeId(prev)
+    if (bakeId) orphanBakeIds.push(bakeId)
+    const cell = next[i]!
+    cell.sourceImageId = prev.sourceImageId
+    // Identity visual config → display the source (drop any orientation bake).
+    cell.imageId = prev.sourceImageId
+    resetCellVisualConfig(cell)
   }
-  return next
+  for (let i = count; i < previous.length; i += 1) {
+    const bakeId = cellBakeId(previous[i]!)
+    if (bakeId) orphanBakeIds.push(bakeId)
+  }
+  return { cells: next, orphanBakeIds }
 }
 
 function resetFractionsForLayout(draft: CollageSessionState, layout: LayoutDefinition): void {
@@ -151,12 +170,21 @@ export const useCollageStore = defineStore('collage', () => {
 
   function setLayout(definition: LayoutDefinition): void {
     const parsed = parseLayoutDefinition(definition)
+    pendingOrientationByCell.clear()
+    inflightOrientationByCell.clear()
     patchPresent((draft) => {
       draft.layout = parsed
-      draft.cellImages = resizeCellImages(draft.cellImages, parsed.cells.length)
+      const { cells, orphanBakeIds } = resizeCellImages(draft.cellImages, parsed.cells.length)
+      draft.cellImages = cells
       resetFractionsForLayout(draft, parsed)
       if (draft.selectedCellIndex !== null && draft.selectedCellIndex >= parsed.cells.length) {
         draft.selectedCellIndex = null
+      }
+      if (orphanBakeIds.length > 0) {
+        const registry = useImageRegistry()
+        for (const bakeId of new Set(orphanBakeIds)) {
+          if (!bakeIdUsedByAnyCell(bakeId, draft)) registry.remove(bakeId)
+        }
       }
     })
   }
@@ -317,7 +345,7 @@ export const useCollageStore = defineStore('collage', () => {
     void bakeChain
   }
 
-  /** Clear image assignment; reset logical rotate/flip to defaults (pan/scale kept). */
+  /** Clear image assignment; reset pan/scale/rotate/flip to defaults. */
   function clearCellImage(cellIndex: number): void {
     pendingOrientationByCell.delete(cellIndex)
     inflightOrientationByCell.delete(cellIndex)
@@ -327,16 +355,14 @@ export const useCollageStore = defineStore('collage', () => {
       const bakeId = cellBakeId(cell)
       cell.sourceImageId = null
       cell.imageId = null
-      cell.rotation = DEFAULT_CELL_ROTATION
-      cell.flipX = DEFAULT_CELL_FLIP_X
-      cell.flipY = DEFAULT_CELL_FLIP_Y
+      resetCellVisualConfig(cell)
       if (bakeId && !bakeIdUsedByAnyCell(bakeId, draft)) {
         useImageRegistry().remove(bakeId)
       }
     })
   }
 
-  /** Clear image assignments on every cell; reset logical rotate/flip (layout/style kept). */
+  /** Clear image assignments on every cell; reset pan/scale/rotate/flip (layout/style kept). */
   function clearAllCellImages(): void {
     if (
       !session.value.cellImages.some(
@@ -345,7 +371,10 @@ export const useCollageStore = defineStore('collage', () => {
           c.sourceImageId !== null ||
           c.rotation !== DEFAULT_CELL_ROTATION ||
           c.flipX ||
-          c.flipY,
+          c.flipY ||
+          c.scale !== DEFAULT_CELL_SCALE ||
+          c.position.x !== DEFAULT_CELL_POSITION.x ||
+          c.position.y !== DEFAULT_CELL_POSITION.y,
       )
     ) {
       return
@@ -359,9 +388,7 @@ export const useCollageStore = defineStore('collage', () => {
         if (bakeId) bakeIds.add(bakeId)
         cell.sourceImageId = null
         cell.imageId = null
-        cell.rotation = DEFAULT_CELL_ROTATION
-        cell.flipX = DEFAULT_CELL_FLIP_X
-        cell.flipY = DEFAULT_CELL_FLIP_Y
+        resetCellVisualConfig(cell)
       }
       const registry = useImageRegistry()
       for (const bakeId of bakeIds) registry.remove(bakeId)
