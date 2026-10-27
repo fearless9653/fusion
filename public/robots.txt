@@ -1,4 +1,4 @@
-﻿# Fusion — allow all crawlers (no restrictions)
+# Fusion — public SPA; allow all crawlers
 User-agent: *
 Allow: /
 

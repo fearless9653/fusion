@@ -1,152 +1,119 @@
 # Fusion
 
-本地拼图编辑器 — 选图、排版、样式、水印与导出，全在浏览器完成。
+**Fusion** is a local-first photo collage editor: pick photos, arrange a layout, style the frame, add a watermark, and export — entirely in your browser.
 
-![Vue 3](https://img.shields.io/badge/Vue-3-42b883?logo=vuedotjs&logoColor=white)
-![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
-![Vite](https://img.shields.io/badge/Vite-7-646CFF?logo=vite&logoColor=white)
-![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
+[![Vue 3](https://img.shields.io/badge/Vue-3-42b883?logo=vuedotjs&logoColor=white)](https://vuejs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Vite](https://img.shields.io/badge/Vite-7-646CFF?logo=vite&logoColor=white)](https://vite.dev/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-## 简介
+**Language:** English · [简体中文](README.zh-CN.md)
 
-**Fusion** 是一款纯前端的照片拼图应用：把多张本地图片填进布局模板，调整间距、圆角、边框与背景，可选水印，再导出 JPG/PNG 或复制到剪贴板。无需账号、无需后端，数据不出浏览器。
+## Why Fusion?
 
-## 功能特性
+Photos never leave your device. There is no account, no upload API, and no cloud sync — images live in memory / object URLs for the session. Use Fusion for social posts, print-oriented frames, or quick multi-photo layouts.
 
-**核心**
+## Features
 
-- 主拼贴工作台：内置布局目录、单元格填图、平移缩放、旋转 / 镜像（eager bake）、拖拽交换
-- 样式：间距、圆角、四边边框、背景色 / 背景图、画幅比例（常见比、打印尺寸、自定义）
-- 水印：开关、文案、字号、透明度、旋转、平铺 / 单点位置
-- 导出：高清 / 标准 JPG、PNG；剪贴板复制（失败时回退下载）
+### Collage workspace (`/`)
 
-**扩展**
+- Built-in layout catalog with favorites; overlay sidebars (stage insets at ≥1024px width)
+- Fill cells via file picker or drag-and-drop; clear one cell or all images
+- Per-cell pan / zoom, rotate & flip (eager bitmap bake in a Web Worker), drag to swap cells
+- Drag shared gutters to resize tracks without changing image count
+- Style: spacing, corner radius, per-side borders, background color or image
+- Aspect ratio: **common** presets (1:1, 3:2, 4:3, 5:4, 16:9, 16:10), **print** sizes (mm pairs with orientation swap), **custom** width × height
+- Watermark: on/off, text, size, opacity, rotation, tile or single placement
+- Export: high / medium JPG, PNG; clipboard copy with download fallback
+- UI: light / dark / system theme; zh-CN / en (vue-i18n)
 
-- 自定义布局编辑器：网格增删改 → JSON → 应用到主拼贴
-- 外观：浅色 / 深色 / 跟随系统；界面中英双语（默认跟随浏览器，可手动切换）
+### Custom layout (`/custom-layout`)
 
-## 快速开始
+- Grid editor to add, move, and resize blocks, then apply the layout back to the main collage
+- JSON panel for power users; draft handoff into the collage session
 
-**环境**
+### Runtime
 
-- Node.js 20+（推荐 22，见仓库 `.nvmrc`）
-- [pnpm](https://pnpm.io/) 9+（本仓库使用 `pnpm-lock.yaml`，请勿混用 npm/yarn 锁文件）
+- Installable PWA shell (`vite-plugin-pwa`) — app assets may be cached; **user photos are not precached**
+- Image decode and orientation bake run in Web Workers; export draws with Canvas locally
 
-**安装与运行**
+## Tech stack
+
+| Area     | Choice                                                                     |
+| -------- | -------------------------------------------------------------------------- |
+| UI       | Vue 3, Vue Router, Pinia, Tailwind CSS v4, Lucide                          |
+| Language | TypeScript, vue-i18n, Zod                                                  |
+| Tooling  | Vite 7, ESLint, Prettier, Vitest, Husky, lint-staged, pnpm                 |
+| Workers  | `imageDecode` / `imageBake` (ES modules)                                   |
+| Hosting  | Static SPA — Cloudflare Pages ready (`wrangler.toml`, `public/_redirects`) |
+
+## Requirements
+
+- **Node.js** 20+ (22 recommended; see `.nvmrc`)
+- **pnpm** 9+ (lockfile is `pnpm-lock.yaml` — do not mix npm/yarn locks)
+
+## Development
 
 ```bash
 pnpm install
 pnpm dev
 ```
 
-浏览器打开终端提示的本地地址即可。生产构建：
+Open the URL printed by Vite.
+
+| Command                       | Purpose                                         |
+| ----------------------------- | ----------------------------------------------- |
+| `pnpm dev`                    | Dev server                                      |
+| `pnpm build`                  | `vue-tsc --noEmit` + production build → `dist/` |
+| `pnpm preview`                | Preview production build                        |
+| `pnpm lint`                   | ESLint                                          |
+| `pnpm format`                 | Prettier write                                  |
+| `pnpm typecheck`              | Typecheck only                                  |
+| `pnpm test` / `pnpm test:run` | Vitest watch / CI once                          |
+| `pnpm icons:pwa`              | Regenerate PWA icons from `public/favicon.svg`  |
+
+CI (GitHub Actions): lint → typecheck → test → build on `main` / pull requests.
+
+## Build & deploy
 
 ```bash
 pnpm build
-pnpm preview
 ```
 
-## 使用说明
-
-| 路径             | 说明                                         |
-| ---------------- | -------------------------------------------- |
-| `/`              | 主拼贴：左侧选布局，中间画布，右侧样式与导出 |
-| `/custom-layout` | 自定义布局：编辑网格后「使用此布局」回到主站 |
-
-顶栏：语言下拉（中文 / English）、主题图标循环（浅色 → 深色 → 跟随系统）。
-
-## 技术栈
-
-- Vue 3 · TypeScript · Vite
-- Vue Router · Pinia · Tailwind CSS v4（品牌色 emerald）
-- vue-i18n · Zod · Lucide
-- Web Worker 解码 / 方向 bake · Canvas 自绘导出
-- ESLint · Prettier · Vitest · Husky · GitHub Actions CI · pnpm
-
-## 目录结构
-
-```
-src/
-  app/         # 应用壳、路由、插件、主题 token
-  pages/       # 路由页（薄层组合）
-  features/    # canvas / layout-editor / export / watermark / images
-  entities/    # 布局 Schema v1、会话类型
-  shared/      # 通用 UI、工具、Worker
-  locales/     # zh-CN、en（键需保持对等）
-public/        # 静态资源（favicon、_redirects）
-```
-
-布局 JSON 只描述网格；样式、单元格图片与变换在会话状态中，不写入布局文件。
-
-## 开发脚本
-
-| 命令                     | 说明                |
-| ------------------------ | ------------------- |
-| `pnpm dev`               | 开发服务器          |
-| `pnpm build`             | 类型检查 + 生产构建 |
-| `pnpm preview`           | 预览构建产物        |
-| `pnpm lint`              | ESLint              |
-| `pnpm format`            | Prettier 写入       |
-| `pnpm typecheck`         | `vue-tsc --noEmit`  |
-| `pnpm test` / `test:run` | Vitest 监听 / 单次  |
-
-## 部署
+Output directory: `dist/`.
 
 ### Cloudflare Pages
 
-本项目为 Vite SPA，构建产物在 `dist/`。仓库已包含：
+| Setting          | Value                                |
+| ---------------- | ------------------------------------ |
+| Build command    | `pnpm run build`                     |
+| Output directory | `dist`                               |
+| Node version     | `22` (`NODE_VERSION=22` recommended) |
 
-- `public/_redirects`：`/* → /index.html`（200），保证 `/custom-layout` 等前端路由刷新不 404
-- `wrangler.toml`：`pages_build_output_dir = "dist"`（本地 `wrangler pages` 调试可用）
-
-在 Cloudflare Dashboard → Workers & Pages → Create → Connect to Git：
-
-| 设置项                 | 值               |
-| ---------------------- | ---------------- |
-| Framework preset       | Vite（或 None）  |
-| Build command          | `pnpm run build` |
-| Build output directory | `dist`           |
-| Root directory         | `/`（仓库根）    |
-
-环境变量 / 构建配置建议：
-
-- **Node.js version**：`22`（与 `.nvmrc` 一致；在 Pages → Settings → Environment variables 或 Build configuration 中设置 `NODE_VERSION=22`）
-- 包管理：Pages 检测到 `pnpm-lock.yaml` 时会使用 pnpm；请保持锁文件提交在仓库中
-
-部署后直接打开站点即可；SPA 回退由 `_redirects` 处理，无需额外 Worker。
-
-也可使用 Wrangler CLI（需已登录）：
+SPA fallback for client routes is provided by `public/_redirects` (`/* → /index.html` 200). Optional CLI:
 
 ```bash
 pnpm build
 npx wrangler pages deploy dist --project-name=fusion
 ```
 
-## 贡献
+Any static host that serves `dist/` and rewrites unknown paths to `index.html` also works.
 
-欢迎 Issue / PR。提交信息使用 [Conventional Commits](https://www.conventionalcommits.org/)（英文），例如 `feat:`、`fix:`、`chore:`。
+## Project layout
 
-提交前建议：
-
-```bash
-pnpm lint
-pnpm typecheck
-pnpm test:run
-pnpm build
+```
+src/
+  app/          # Shell, router, plugins, global styles
+  pages/        # Route pages (thin composition)
+  features/     # canvas, layout-editor, export, images, watermark
+  entities/     # Layout schema, session types
+  shared/       # UI primitives, libs, workers
+  locales/      # zh-CN, en (keep keys in sync)
+public/         # favicon, PWA icons, robots.txt, _redirects
 ```
 
-## PWA
+Layout JSON describes the grid only. Session style, cell images, and transforms live in app state — they are not written into layout files.
 
-支持安装为 Progressive Web App（`vite-plugin-pwa`）：生产构建会生成 Web App Manifest 与 Service Worker，可缓存应用壳（JS/CSS/HTML/图标）。**用户照片与导出结果不会进离线缓存**，仍依赖当次会话。
+## License
 
-本地验证：`pnpm build && pnpm preview`，用 Chromium 打开预览地址 → 安装应用 / Application → Manifest & Service Workers。
-
-重新生成图标（从 `public/favicon.svg`）：`pnpm icons:pwa`。
-
-## SEO
-
-`index.html` 提供可抓取的标题 / 描述 / `robots: index, follow` 与基础 OG；`public/robots.txt` 允许全部抓取（SPA 无 SSR，正文仍依赖客户端渲染）。
-
-## 许可证
-
-[MIT](LICENSE)
+MIT — see [LICENSE](LICENSE).

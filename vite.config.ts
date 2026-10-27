@@ -1,4 +1,4 @@
-﻿/// <reference types="vitest/config" />
+/// <reference types="vitest/config" />
 import { fileURLToPath, URL } from 'node:url'
 import tailwindcss from '@tailwindcss/vite'
 import vue from '@vitejs/plugin-vue'
@@ -32,7 +32,7 @@ export default defineConfig({
         name: 'Fusion',
         short_name: 'Fusion',
         description:
-          'Fusion is a browser photo collage maker that runs locally: upload photos, pick or customize layouts, style borders and watermarks, then export JPG/PNG. No server upload, no account.',
+          'Fusion — local-first photo collage: templates and custom layouts, aspect ratios, watermarks, export JPG/PNG. Photos stay on your device.',
         theme_color: '#50c878',
         background_color: '#f8fafc',
         display: 'standalone',
