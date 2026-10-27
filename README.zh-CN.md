@@ -39,13 +39,13 @@
 
 ## 技术栈
 
-| 领域   | 选型                                                                       |
-| ------ | -------------------------------------------------------------------------- |
-| UI     | Vue 3、Vue Router、Pinia、Tailwind CSS v4、Lucide                          |
-| 语言   | TypeScript、vue-i18n、Zod                                                  |
-| 工程   | Vite 7、ESLint、Prettier、Vitest、Husky、lint-staged、pnpm                 |
-| Worker | `imageDecode` / `imageBake`（ES module）                                   |
-| 托管   | 静态 SPA — 已适配 Cloudflare Pages（`wrangler.toml`、`public/_redirects`） |
+| 领域   | 选型                                                                                          |
+| ------ | --------------------------------------------------------------------------------------------- |
+| UI     | Vue 3、Vue Router、Pinia、Tailwind CSS v4、Lucide                                             |
+| 语言   | TypeScript、vue-i18n、Zod                                                                     |
+| 工程   | Vite 7、ESLint、Prettier、Vitest、Husky、lint-staged、pnpm                                    |
+| Worker | `imageDecode` / `imageBake`（ES module）                                                      |
+| 托管   | 静态 SPA — 已适配 Cloudflare Pages（`wrangler.toml`、`public/_redirects`、`public/_headers`） |
 
 ## 环境要求
 
@@ -90,7 +90,7 @@ pnpm build
 | Output directory | `dist`                             |
 | Node 版本        | `22`（建议设置 `NODE_VERSION=22`） |
 
-前端路由回退由 `public/_redirects` 提供（`/* → /index.html` 200）。也可使用 Wrangler：
+前端路由回退由 `public/_redirects` 提供（`/* → /index.html` 200）。`public/_headers` 让 `index.html` / `sw.js` 每次校验最新，带 hash 的 `/assets/*` 则长期缓存。也可使用 Wrangler：
 
 ```bash
 pnpm build
@@ -109,7 +109,7 @@ src/
   entities/     # 布局 Schema、会话类型
   shared/       # 通用 UI、工具库、Worker
   locales/      # zh-CN、en（键需保持对等）
-public/         # favicon、PWA 图标、robots.txt、_redirects
+public/         # favicon、PWA 图标、robots.txt、_redirects、_headers
 ```
 
 布局 JSON 只描述网格；样式、单元格图片与变换保存在会话状态中，不写入布局文件。

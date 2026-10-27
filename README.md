@@ -39,13 +39,13 @@ Photos never leave your device. There is no account, no upload API, and no cloud
 
 ## Tech stack
 
-| Area     | Choice                                                                     |
-| -------- | -------------------------------------------------------------------------- |
-| UI       | Vue 3, Vue Router, Pinia, Tailwind CSS v4, Lucide                          |
-| Language | TypeScript, vue-i18n, Zod                                                  |
-| Tooling  | Vite 7, ESLint, Prettier, Vitest, Husky, lint-staged, pnpm                 |
-| Workers  | `imageDecode` / `imageBake` (ES modules)                                   |
-| Hosting  | Static SPA — Cloudflare Pages ready (`wrangler.toml`, `public/_redirects`) |
+| Area     | Choice                                                                                        |
+| -------- | --------------------------------------------------------------------------------------------- |
+| UI       | Vue 3, Vue Router, Pinia, Tailwind CSS v4, Lucide                                             |
+| Language | TypeScript, vue-i18n, Zod                                                                     |
+| Tooling  | Vite 7, ESLint, Prettier, Vitest, Husky, lint-staged, pnpm                                    |
+| Workers  | `imageDecode` / `imageBake` (ES modules)                                                      |
+| Hosting  | Static SPA — Cloudflare Pages ready (`wrangler.toml`, `public/_redirects`, `public/_headers`) |
 
 ## Requirements
 
@@ -90,7 +90,7 @@ Output directory: `dist/`.
 | Output directory | `dist`                               |
 | Node version     | `22` (`NODE_VERSION=22` recommended) |
 
-SPA fallback for client routes is provided by `public/_redirects` (`/* → /index.html` 200). Optional CLI:
+SPA fallback for client routes is provided by `public/_redirects` (`/* → /index.html` 200). Cache headers in `public/_headers` keep `index.html` / `sw.js` revalidating while hashed `/assets/*` stay immutable. Optional CLI:
 
 ```bash
 pnpm build
@@ -109,7 +109,7 @@ src/
   entities/     # Layout schema, session types
   shared/       # UI primitives, libs, workers
   locales/      # zh-CN, en (keep keys in sync)
-public/         # favicon, PWA icons, robots.txt, _redirects
+public/         # favicon, PWA icons, robots.txt, _redirects, _headers
 ```
 
 Layout JSON describes the grid only. Session style, cell images, and transforms live in app state — they are not written into layout files.

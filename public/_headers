@@ -1,0 +1,17 @@
+# Cloudflare Pages — shell/SW always revalidate; hashed assets immutable.
+# https://developers.cloudflare.com/pages/configuration/headers/
+
+/
+  Cache-Control: public, max-age=0, must-revalidate
+
+/index.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+/sw.js
+  Cache-Control: public, max-age=0, must-revalidate
+
+/workbox-*.js
+  Cache-Control: public, max-age=0, must-revalidate
+
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable

@@ -1,7 +1,7 @@
 {
   "name": "fusion",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "description": "Fusion — local photo collage editor (Vue 3)",
   "license": "MIT",
