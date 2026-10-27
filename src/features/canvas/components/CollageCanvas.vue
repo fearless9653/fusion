@@ -163,6 +163,8 @@ async function onCellFilesSelected(event: Event): Promise<void> {
     start,
     (i, id) => collage.assignImage(i, id),
   )
+  // Re-assert selection after OS file dialog (dismiss click may have cleared it).
+  collage.selectCell(start)
 }
 
 function onCellDragOver(event: DragEvent): void {
@@ -365,6 +367,7 @@ onUnmounted(() => {
                   :selected="collage.selectedCellIndex === index"
                   :pan-mode="panMode"
                   :scale-percent="Math.round(scaleFor(index) * 100)"
+                  @select="collage.selectCell(index)"
                   @pan-toggle="togglePanMode"
                   @rotate="rotateCw($event, index)"
                   @flip-horizontal="flipHorizontal($event, index)"
@@ -381,7 +384,7 @@ onUnmounted(() => {
               <div
                 v-for="g in measuredGutters"
                 :key="g.key"
-                class="pointer-events-auto absolute touch-none bg-transparent hover:bg-brand/30 active:bg-brand/30 pointer-coarse:bg-brand/20"
+                class="pointer-events-auto absolute touch-none bg-transparent hover:bg-brand/30 active:bg-brand/30"
                 :class="
                   gutterDrag && gutterDrag.axis === g.axis && gutterDrag.gutterIndex === g.index
                     ? '!bg-brand/30'

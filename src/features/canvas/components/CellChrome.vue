@@ -9,6 +9,7 @@ defineProps<{
 }>()
 
 defineEmits<{
+  select: [event: Event]
   panToggle: [event: Event]
   rotate: [event: Event]
   flipHorizontal: [event: Event]
@@ -30,9 +31,9 @@ const btnDanger =
 <template>
   <!-- Cell chrome: row1 pan/rotate/flips/remove; row2 zoom out | percent | zoom in -->
   <div
-    class="absolute top-1 right-1 left-1 z-20 flex flex-col items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100"
-    :class="selected ? '!opacity-100' : ''"
-    @pointerdown.stop
+    class="absolute top-1 right-1 left-1 z-20 flex flex-col items-center gap-0.5 pointer-events-none opacity-0 transition-opacity pointer-fine:group-hover:pointer-events-auto pointer-fine:group-hover:opacity-100"
+    :class="selected ? '!pointer-events-auto !opacity-100' : ''"
+    @pointerdown.stop="$emit('select', $event)"
     @click.stop
   >
     <div class="flex flex-wrap justify-center gap-0.5">
