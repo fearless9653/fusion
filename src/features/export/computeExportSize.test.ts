@@ -161,7 +161,14 @@ describe('print size portrait UI helpers', () => {
 
 describe('aspect ratio presets', () => {
   it('lists landscape-oriented common ratios including 3:2', () => {
-    expect(ASPECT_RATIO_PRESETS.map((p) => p.id)).toEqual(['1:1', '3:2', '4:3', '16:9', '16:10'])
+    expect(ASPECT_RATIO_PRESETS.map((p) => p.id)).toEqual([
+      '1:1',
+      '3:2',
+      '4:3',
+      '5:4',
+      '16:9',
+      '16:10',
+    ])
     expect(ASPECT_RATIO_PRESETS.find((p) => p.id === '3:2')?.ratio).toEqual({
       width: 3,
       height: 2,

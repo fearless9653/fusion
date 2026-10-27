@@ -86,6 +86,7 @@ export const ASPECT_RATIO_PRESETS: Array<{ id: string; ratio: AspectRatio }> = [
   { id: '1:1', ratio: { width: 1, height: 1 } },
   { id: '3:2', ratio: { width: 3, height: 2 } },
   { id: '4:3', ratio: { width: 4, height: 3 } },
+  { id: '5:4', ratio: { width: 5, height: 4 } },
   { id: '16:9', ratio: { width: 16, height: 9 } },
   { id: '16:10', ratio: { width: 16, height: 10 } },
 ]
