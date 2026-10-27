@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { computed } from 'vue'
 import CollapseEar from './CollapseEar.vue'
 
@@ -17,6 +17,7 @@ const props = withDefaults(
 defineEmits<{ toggle: [] }>()
 
 const asideClass = computed(() => {
+  const sidePin = props.side === 'left' ? 'left-0' : 'right-0'
   const border =
     props.side === 'left'
       ? props.collapsed
@@ -25,18 +26,19 @@ const asideClass = computed(() => {
       : props.collapsed
         ? 'w-0 border-0'
         : `${props.widthClass} border-l border-border`
-  return border
+  return [sidePin, border]
 })
 </script>
 
 <template>
+  <!-- Absolute overlay: sits above the stage; CollapseEar stays pointer-events-auto. -->
   <aside
-    class="relative z-20 flex min-h-0 shrink-0 flex-col overflow-visible bg-surface transition-[width] duration-200 ease-out"
+    class="pointer-events-none absolute inset-y-0 z-20 flex min-h-0 flex-col overflow-visible bg-surface transition-[width] duration-200 ease-out"
     :class="asideClass"
   >
     <div
       v-show="!collapsed"
-      class="flex h-full min-h-0 flex-col overflow-hidden"
+      class="pointer-events-auto flex h-full min-h-0 flex-col overflow-hidden"
       :class="widthClass"
     >
       <slot />

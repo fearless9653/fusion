@@ -12,6 +12,7 @@ import {
   readSidebarCollapsed,
   writeSidebarCollapsed,
 } from '@/features/canvas/sidebarCollapse'
+import { useStageSidebarInsets } from '@/features/canvas/composables/useStageSidebarInsets'
 import { fillEmptyCells, imageFilesFromList, isFileDrag, useImageRegistry } from '@/features/images'
 import { clearCustomLayoutHandoff, readCustomLayoutHandoff } from '@/features/layout-editor'
 import { SidebarShell } from '@/shared/ui'
@@ -26,6 +27,7 @@ const pageDropActive = ref(false)
 
 const leftCollapsed = ref(false)
 const rightCollapsed = ref(false)
+const { stageInsetStyle } = useStageSidebarInsets(leftCollapsed, rightCollapsed)
 
 function clearPageDropUi(): void {
   dragDepth.value = 0
@@ -111,12 +113,20 @@ async function onPageDrop(event: DragEvent): Promise<void> {
 
 <template>
   <div
-    class="relative flex h-full min-h-0 w-full gap-0 overflow-hidden rounded-xl border border-border bg-surface-muted shadow-sm"
+    class="relative h-full min-h-0 w-full overflow-hidden rounded-xl border border-border bg-surface-muted shadow-sm"
     @dragenter="onPageDragEnter"
     @dragover="onPageDragOver"
     @dragleave="onPageDragLeave"
     @drop="onPageDrop"
   >
+    <!-- Full-bleed stage underlay; ≥1024 insets track expanded sidebars. -->
+    <section
+      class="absolute inset-0 z-0 flex min-h-0 min-w-0 flex-col overflow-hidden bg-border-muted/80 py-8 transition-[padding] duration-200 ease-out"
+      :style="stageInsetStyle"
+    >
+      <CollageCanvas />
+    </section>
+
     <SidebarShell
       side="left"
       :collapsed="leftCollapsed"
@@ -126,12 +136,6 @@ async function onPageDrop(event: DragEvent): Promise<void> {
     >
       <LayoutPicker />
     </SidebarShell>
-
-    <section
-      class="relative z-0 flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-border-muted/80 px-3 py-8"
-    >
-      <CollageCanvas />
-    </section>
 
     <SidebarShell
       side="right"

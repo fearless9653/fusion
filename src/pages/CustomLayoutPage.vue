@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import LayoutEditorSettings from '@/features/layout-editor/components/LayoutEditorSettings.vue'
@@ -11,6 +11,7 @@ import {
   readSidebarCollapsed,
   writeSidebarCollapsed,
 } from '@/features/canvas/sidebarCollapse'
+import { useStageSidebarInsets } from '@/features/canvas/composables/useStageSidebarInsets'
 import { SidebarShell } from '@/shared/ui'
 
 const { t } = useI18n()
@@ -18,6 +19,7 @@ const editor = useLayoutEditorStore()
 
 const leftCollapsed = ref(false)
 const rightCollapsed = ref(false)
+const { stageInsetStyle } = useStageSidebarInsets(leftCollapsed, rightCollapsed)
 
 function toggleLeft(): void {
   leftCollapsed.value = !leftCollapsed.value
@@ -39,8 +41,16 @@ onMounted(() => {
 
 <template>
   <div
-    class="relative flex h-full min-h-0 w-full gap-0 overflow-hidden rounded-xl border border-border bg-surface-muted shadow-sm"
+    class="relative h-full min-h-0 w-full overflow-hidden rounded-xl border border-border bg-surface-muted shadow-sm"
   >
+    <!-- Full-bleed stage underlay; ≥1024 insets track expanded sidebars. -->
+    <section
+      class="absolute inset-0 z-0 min-h-0 min-w-0 overflow-y-auto bg-border-muted/80 py-3 transition-[padding] duration-200 ease-out"
+      :style="stageInsetStyle"
+    >
+      <LayoutGridEditor />
+    </section>
+
     <SidebarShell
       side="left"
       :collapsed="leftCollapsed"
@@ -52,10 +62,6 @@ onMounted(() => {
         <LayoutEditorSettings />
       </div>
     </SidebarShell>
-
-    <section class="relative z-0 min-h-0 min-w-0 flex-1 overflow-y-auto bg-border-muted/80 p-3">
-      <LayoutGridEditor />
-    </section>
 
     <SidebarShell
       side="right"

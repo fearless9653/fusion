@@ -4,7 +4,17 @@ import type { CollageStyle } from '@/entities/session'
 import type { useCollageStore } from '@/features/canvas'
 import { measureSharedGutterSegments, normalizeFractions, redistributeAdjacent } from '@/shared/lib'
 
-const GUTTER_HIT = 8
+/**
+ * Minimum gutter hit size in CSS px (transparent overlay).
+ * Visual gap still comes from grid `gap`; this only widens the grab target for mouse + touch.
+ */
+export const GUTTER_HIT_MIN_PX = 28
+
+/** Resolve overlay hit thickness from spacing gap. */
+export function gutterHitPx(gap: number): number {
+  const g = Math.max(0, gap)
+  return Math.max(GUTTER_HIT_MIN_PX, g || GUTTER_HIT_MIN_PX)
+}
 
 type GutterOverlay = {
   axis: 'row' | 'col'
@@ -54,7 +64,7 @@ export function useGutterDrag(options: {
     const h = gridBox.value.height
     if (w <= 0 || h <= 0) return []
 
-    const hit = Math.max(GUTTER_HIT, gap || GUTTER_HIT)
+    const hit = gutterHitPx(gap)
     const segments = measureSharedGutterSegments({
       cells: lay.cells,
       rowFractions: displayRowFractions.value,
@@ -100,6 +110,8 @@ export function useGutterDrag(options: {
     axis: 'row' | 'col',
     gutterIndex: number,
   ): void {
+    if (event.isPrimary === false) return
+    if (typeof event.button === 'number' && event.button !== 0) return
     event.preventDefault()
     event.stopPropagation()
     const origin = axis === 'row' ? [...displayRowFractions.value] : [...displayColFractions.value]

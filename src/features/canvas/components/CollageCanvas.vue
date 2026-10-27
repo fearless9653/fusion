@@ -58,6 +58,7 @@ const {
   onPanPointerMove,
   onPointerUp: onCellPointerUp,
   cancelCellPointer,
+  consumeClickSuppression,
   onCellWheel,
   togglePanMode,
   zoomIn,
@@ -133,6 +134,9 @@ function clearCellSelection(): void {
 }
 
 function onCellClick(index: number): void {
+  // After a pan/swap drag, pointerup is followed by click on the capture target —
+  // do not open the empty-cell file picker in that case.
+  if (consumeClickSuppression()) return
   collage.selectCell(index)
   // Empty cell → file picker (multi fills forward through empties)
   if (!cellHasImage(index)) {
@@ -287,8 +291,9 @@ onUnmounted(() => {
               <div
                 v-for="(cell, index) in layout.cells"
                 :key="index"
-                class="group relative min-h-0 min-w-0 overflow-hidden bg-slate-200 transition [container-type:size]"
+                class="group relative min-h-0 min-w-0 touch-none overflow-hidden bg-slate-200 transition [container-type:size]"
                 :class="panMode && cellHasImage(index) ? 'cursor-move' : 'cursor-pointer'"
+                :data-cell-index="index"
                 :style="{
                   ...cellGridStyle(cell),
                   borderRadius: `${style.radius}px`,
@@ -376,7 +381,12 @@ onUnmounted(() => {
               <div
                 v-for="g in measuredGutters"
                 :key="g.key"
-                class="pointer-events-auto absolute bg-transparent hover:bg-brand/30"
+                class="pointer-events-auto absolute touch-none bg-transparent hover:bg-brand/30 active:bg-brand/30 pointer-coarse:bg-brand/20"
+                :class="
+                  gutterDrag && gutterDrag.axis === g.axis && gutterDrag.gutterIndex === g.index
+                    ? '!bg-brand/30'
+                    : ''
+                "
                 :style="g.style"
                 @pointerdown="onGutterPointerDown($event, g.axis, g.index)"
                 @pointermove="onPointerMove"

@@ -22,9 +22,9 @@ defineEmits<{
 const { t } = useI18n()
 
 const btn =
-  'inline-flex h-7 w-7 items-center justify-center rounded bg-black/60 p-0 text-white hover:bg-black/80'
+  'inline-flex h-7 w-7 items-center justify-center rounded bg-black/60 p-0 text-white hover:bg-black/80 pointer-coarse:h-9 pointer-coarse:w-9'
 const btnDanger =
-  'inline-flex h-7 w-7 items-center justify-center rounded bg-black/60 p-0 text-white hover:bg-rose-700/90'
+  'inline-flex h-7 w-7 items-center justify-center rounded bg-black/60 p-0 text-white hover:bg-rose-700/90 pointer-coarse:h-9 pointer-coarse:w-9'
 </script>
 
 <template>
@@ -100,7 +100,7 @@ const btnDanger =
       </button>
       <button
         type="button"
-        class="inline-flex h-7 min-w-[2.75rem] items-center justify-center rounded bg-black/60 px-1.5 text-center text-[11px] font-semibold leading-none tabular-nums text-white hover:bg-black/80"
+        class="inline-flex h-7 min-w-[2.75rem] items-center justify-center rounded bg-black/60 px-1.5 text-center text-[11px] font-semibold leading-none tabular-nums text-white hover:bg-black/80 pointer-coarse:h-9 pointer-coarse:min-w-[3.25rem] pointer-coarse:text-xs"
         :title="t('collage.cellZoomReset')"
         :aria-label="`${t('collage.cellZoomReset')} ${scalePercent}%`"
         @click="$emit('zoomReset', $event)"
