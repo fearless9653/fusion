@@ -6,11 +6,11 @@ import { measureSharedGutterSegments, normalizeFractions, redistributeAdjacent }
 
 /**
  * Minimum gutter hit size in CSS px (transparent overlay).
- * Visual gap still comes from grid `gap`; this only widens the grab target for mouse + touch.
+ * Visual gap still comes from grid `gap`; hit matches pre–touch-harden thickness (max(8, gap)).
  */
-export const GUTTER_HIT_MIN_PX = 28
+export const GUTTER_HIT_MIN_PX = 8
 
-/** Resolve overlay hit thickness from spacing gap. */
+/** Resolve overlay hit thickness from spacing gap — same as legacy `max(GUTTER_HIT, gap || GUTTER_HIT)`. */
 export function gutterHitPx(gap: number): number {
   const g = Math.max(0, gap)
   return Math.max(GUTTER_HIT_MIN_PX, g || GUTTER_HIT_MIN_PX)
