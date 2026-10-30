@@ -65,6 +65,7 @@ describe('renderCollage', () => {
       spacing: 4,
       borders: { top: 10, right: 10, bottom: 10, left: 10 },
       watermark: {
+        ...DEFAULT_STYLE.watermark,
         enabled: true,
         text: 'test',
         fontSize: 16,

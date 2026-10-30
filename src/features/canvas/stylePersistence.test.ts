@@ -97,6 +97,7 @@ describe('stylePersistence', () => {
     style.background.imageId = 'img_missing'
     const result = await persistFullStyle(style, async () => null)
     expect(result.ok).toBe(false)
+    if (result.ok) throw new Error('expected persist failure')
     expect(result.styleJsonSaved).toBe(true)
     const loaded = readPersistedStyle()
     expect(loaded?.background.color).toBe('#abcdef')

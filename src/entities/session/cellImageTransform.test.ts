@@ -8,6 +8,7 @@ import {
   resolveCellTransform,
   rotateCellCw,
   toCanonicalCellTransform,
+  type CellImageTransform,
 } from './cellImageTransform'
 
 describe('normalizeCellRotation', () => {
@@ -150,7 +151,7 @@ describe('flipCellHorizontalScreen / flipCellVerticalScreen', () => {
   })
 
   it('rotate90 then flipH twice returns to rotate90 (canonical)', () => {
-    let tf = { rotation: 0 as const, flipX: false, flipY: false }
+    let tf: CellImageTransform = { rotation: 0, flipX: false, flipY: false }
     tf = { ...tf, rotation: rotateCellCw(tf.rotation) }
     expect(tf.rotation).toBe(90)
     tf = toCanonicalCellTransform(flipCellHorizontalScreen(tf))

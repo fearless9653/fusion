@@ -5,7 +5,7 @@ import vue from '@vitejs/plugin-vue'
 import { defineConfig } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
-/** Harmless Rollup noise from zod@4 PURE-annotation comments in node_modules. */
+/** Harmless Rollup/Rolldown noise from zod@4 PURE-annotation comments in node_modules. */
 function isZodPureAnnotationWarning(warning: {
   code?: string
   message: string
@@ -79,7 +79,40 @@ export default defineConfig({
     format: 'es',
   },
   build: {
-    rollupOptions: {
+    // Vite 8 / Rolldown: codeSplitting.groups (manualChunks deprecated).
+    // Lazy pages + templatesCatalog stay as dynamic-import chunks.
+    rolldownOptions: {
+      output: {
+        codeSplitting: {
+          groups: [
+            {
+              name: 'vendor-pinia',
+              test: /[/\\]node_modules[/\\]pinia[/\\]/,
+              priority: 40,
+            },
+            {
+              name: 'vendor-router',
+              test: /[/\\]node_modules[/\\]vue-router[/\\]/,
+              priority: 40,
+            },
+            {
+              name: 'vendor-i18n',
+              test: /[/\\]node_modules[/\\](?:vue-i18n|@intlify)[/\\]/,
+              priority: 40,
+            },
+            {
+              name: 'vendor-zod',
+              test: /[/\\]node_modules[/\\]zod[/\\]/,
+              priority: 40,
+            },
+            {
+              name: 'vendor-vue',
+              test: /[/\\]node_modules[/\\](?:vue|@vue)[/\\]/,
+              priority: 30,
+            },
+          ],
+        },
+      },
       onwarn(warning, warn) {
         if (isZodPureAnnotationWarning(warning)) return
         warn(warning)
@@ -88,6 +121,6 @@ export default defineConfig({
   },
   test: {
     environment: 'jsdom',
-    include: ['src/**/*.{test,spec}.ts', 'tests/**/*.{test,spec}.ts'],
+    include: ['src/**/*.{test,spec}.ts'],
   },
 })

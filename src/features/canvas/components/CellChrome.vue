@@ -144,21 +144,6 @@ function onCoarseChange(): void {
   updateCompactFromCell()
 }
 
-function relay(
-  name:
-    | 'panToggle'
-    | 'rotate'
-    | 'flipHorizontal'
-    | 'flipVertical'
-    | 'remove'
-    | 'zoomIn'
-    | 'zoomOut'
-    | 'zoomReset',
-  event: Event,
-): void {
-  emit(name, event)
-}
-
 watch(
   () => props.selected,
   (selected) => {
@@ -238,14 +223,14 @@ onBeforeUnmount(() => {
       v-else
       :pan-mode="panMode"
       :scale-percent="scalePercent"
-      @pan-toggle="relay('panToggle', $event)"
-      @rotate="relay('rotate', $event)"
-      @flip-horizontal="relay('flipHorizontal', $event)"
-      @flip-vertical="relay('flipVertical', $event)"
-      @remove="relay('remove', $event)"
-      @zoom-in="relay('zoomIn', $event)"
-      @zoom-out="relay('zoomOut', $event)"
-      @zoom-reset="relay('zoomReset', $event)"
+      @pan-toggle="emit('panToggle', $event)"
+      @rotate="emit('rotate', $event)"
+      @flip-horizontal="emit('flipHorizontal', $event)"
+      @flip-vertical="emit('flipVertical', $event)"
+      @remove="emit('remove', $event)"
+      @zoom-in="emit('zoomIn', $event)"
+      @zoom-out="emit('zoomOut', $event)"
+      @zoom-reset="emit('zoomReset', $event)"
     />
   </div>
 
@@ -264,14 +249,14 @@ onBeforeUnmount(() => {
         as-menu
         :pan-mode="panMode"
         :scale-percent="scalePercent"
-        @pan-toggle="relay('panToggle', $event)"
-        @rotate="relay('rotate', $event)"
-        @flip-horizontal="relay('flipHorizontal', $event)"
-        @flip-vertical="relay('flipVertical', $event)"
-        @remove="relay('remove', $event)"
-        @zoom-in="relay('zoomIn', $event)"
-        @zoom-out="relay('zoomOut', $event)"
-        @zoom-reset="relay('zoomReset', $event)"
+        @pan-toggle="emit('panToggle', $event)"
+        @rotate="emit('rotate', $event)"
+        @flip-horizontal="emit('flipHorizontal', $event)"
+        @flip-vertical="emit('flipVertical', $event)"
+        @remove="emit('remove', $event)"
+        @zoom-in="emit('zoomIn', $event)"
+        @zoom-out="emit('zoomOut', $event)"
+        @zoom-reset="emit('zoomReset', $event)"
       />
     </div>
   </Teleport>

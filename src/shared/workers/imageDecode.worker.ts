@@ -3,7 +3,11 @@
  */
 import { isImageDecodeRequest, type ImageDecodeResponse } from './imageDecode.types'
 
-const ctx: DedicatedWorkerGlobalScope = self as unknown as DedicatedWorkerGlobalScope
+type WorkerScope = {
+  postMessage(message: ImageDecodeResponse, transfer?: Transferable[]): void
+  addEventListener(type: 'message', listener: (event: MessageEvent<unknown>) => void): void
+}
+const ctx: WorkerScope = self as unknown as WorkerScope
 
 ctx.postMessage({ type: 'ready' } satisfies ImageDecodeResponse)
 
