@@ -27,8 +27,8 @@ export type RenderCollageInput = {
   colFractions?: number[]
   /**
    * On-screen collage frame size in CSS pixels (from CollageCanvas).
-   * When set, spacing / radius / borders are scaled by exportWidth / previewWidth
-   * so export matches the preview look.
+   * When set, spacing / radius / borders / watermark fontSize are scaled by
+   * exportWidth / previewWidth so export matches the preview look.
    */
   previewSize?: { width: number; height: number } | null
 }
@@ -228,7 +228,10 @@ export function renderCollage(input: RenderCollageInput): RenderCollageResult {
     ctx.restore()
   })
 
-  drawWatermark(ctx, size.width, size.height, style.watermark)
+  drawWatermark(ctx, size.width, size.height, {
+    ...style.watermark,
+    fontSize: style.watermark.fontSize * pxScale,
+  })
 
   const meta = qualityMime(style)
   return {

@@ -167,3 +167,75 @@ describe('renderCollage style scale', () => {
     vi.restoreAllMocks()
   })
 })
+
+describe('renderCollage watermark fontSize scale', () => {
+  it('scales watermark fontSize with previewSize (exportWidth / previewWidth)', () => {
+    const ctx = mockCtx()
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(
+      ctx as unknown as CanvasRenderingContext2D,
+    )
+    const layout = getTemplate('tpl_grid_2x2')!
+    const sessionFontSize = 20
+    const previewW = 500
+    const style = {
+      ...structuredClone(DEFAULT_STYLE),
+      aspectRatio: { width: 1, height: 1 },
+      downloadQuality: 'medium-jpg' as const,
+      watermark: {
+        ...DEFAULT_STYLE.watermark,
+        enabled: true,
+        text: 'wm',
+        fontSize: sessionFontSize,
+        opacity: 0.2,
+        rotation: 0,
+        density: 2,
+        mode: 'single' as const,
+        position: 'center' as const,
+      },
+    }
+    // medium-jpg square → 2000×2000; preview 500 → scale 4 → fontSize 80
+    renderCollage({
+      layout,
+      style,
+      cellImages: createEmptyCellImages(4),
+      images: new Map(),
+      previewSize: { width: previewW, height: previewW },
+    })
+    const expected = sessionFontSize * (2000 / previewW)
+    expect(ctx.font).toBe(`${expected}px sans-serif`)
+    vi.restoreAllMocks()
+  })
+
+  it('keeps session fontSize when previewSize is absent (pxScale = 1)', () => {
+    const ctx = mockCtx()
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(
+      ctx as unknown as CanvasRenderingContext2D,
+    )
+    const layout = getTemplate('tpl_grid_2x2')!
+    const sessionFontSize = 20
+    const style = {
+      ...structuredClone(DEFAULT_STYLE),
+      aspectRatio: { width: 1, height: 1 },
+      downloadQuality: 'medium-jpg' as const,
+      watermark: {
+        ...DEFAULT_STYLE.watermark,
+        enabled: true,
+        text: 'wm',
+        fontSize: sessionFontSize,
+        opacity: 0.2,
+        rotation: 0,
+        density: 2,
+        mode: 'single' as const,
+        position: 'center' as const,
+      },
+    }
+    renderCollage({
+      layout,
+      style,
+      cellImages: createEmptyCellImages(4),
+      images: new Map(),
+    })
+    expect(ctx.font).toBe(`${sessionFontSize}px sans-serif`)
+    vi.restoreAllMocks()
+  })
+})
