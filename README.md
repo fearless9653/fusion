@@ -114,6 +114,19 @@ public/         # favicon, PWA icons, robots.txt, _redirects, _headers
 
 Layout JSON describes the grid only. Session style, cell images, and transforms live in app state — they are not written into layout files.
 
+## Persistence
+
+| What                                                                 | Where                                         | Lifetime         |
+| -------------------------------------------------------------------- | --------------------------------------------- | ---------------- |
+| Collage style (spacing, radius, borders, colors, watermark settings) | `fusion:style` in `localStorage`              | Survives refresh |
+| Style background image                                               | IndexedDB (referenced from the style payload) | Survives refresh |
+| Cell photos / pan-zoom / orientation                                 | In-memory session only                        | Lost on refresh  |
+| UI prefs (theme, locale, sidebar collapse, style-panel sections, …)  | `fusion:*` `localStorage` keys                | Survives refresh |
+
+**Reset styles** clears persisted style JSON and the IndexedDB background so a refresh stays at defaults. Cell images are unaffected.
+
+**Multi-tab:** style persistence is last-write-wins across tabs — there is no live sync. Prefer one active tab when editing style.
+
 ## License
 
 MIT — see [LICENSE](LICENSE).

@@ -1,16 +1,24 @@
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { getTemplate } from '@/entities/layout'
-import { setOrientationBakeCoalesceMsForTests, useCollageStore } from './collageStore'
+import {
+  setOrientationBakeCoalesceMsForTests,
+  setStylePersistDebounceMsForTests,
+  useCollageStore,
+} from './collageStore'
 
 describe('useCollageStore', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     setOrientationBakeCoalesceMsForTests(0)
+    setStylePersistDebounceMsForTests(0)
+    localStorage.clear()
   })
 
   afterEach(() => {
     setOrientationBakeCoalesceMsForTests(null)
+    setStylePersistDebounceMsForTests(null)
+    localStorage.clear()
   })
 
   it('sets layout and resizes cell image slots', () => {

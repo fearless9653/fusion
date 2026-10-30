@@ -1,7 +1,7 @@
 import type { LayoutDefinition } from '@/entities/layout'
 import { safeParseLayoutDefinition } from '@/entities/layout'
 
-/** localStorage key for custom-layout → collage handoff (next phase fills writer). */
+/** localStorage key for custom-layout → collage session handoff. */
 export const CUSTOM_LAYOUT_HANDOFF_KEY = 'fusion:custom-layout-handoff'
 
 export type CustomLayoutHandoffPayload = {

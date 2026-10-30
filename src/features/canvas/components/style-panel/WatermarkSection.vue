@@ -2,7 +2,14 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useCollageStore } from '@/features/canvas'
-import { PanelSection } from '@/shared/ui'
+import { LabeledRange, PanelSection } from '@/shared/ui'
+import {
+  STYLE_PANEL_WATERMARK_OPEN_KEY,
+  readStylePanelSectionOpen,
+  writeStylePanelSectionOpen,
+} from '@/features/canvas/stylePanelSectionCollapse'
+
+const sectionOpen = readStylePanelSectionOpen(STYLE_PANEL_WATERMARK_OPEN_KEY, false)
 
 const { t } = useI18n()
 const collage = useCollageStore()
@@ -60,7 +67,11 @@ function patchWatermark(partial: Partial<typeof style.value.watermark>): void {
 </script>
 
 <template>
-  <PanelSection :title="t('collage.watermark')" :initially-open="false">
+  <PanelSection
+    :title="t('collage.watermark')"
+    :initially-open="sectionOpen"
+    @toggle="(open) => writeStylePanelSectionOpen(STYLE_PANEL_WATERMARK_OPEN_KEY, open)"
+  >
     <label class="flex items-center justify-between text-xs">
       <span>{{ t('collage.watermarkEnabled') }}</span>
       <input
@@ -78,41 +89,30 @@ function patchWatermark(partial: Partial<typeof style.value.watermark>): void {
         @change="patchWatermark({ text: ($event.target as HTMLInputElement).value })"
       />
     </label>
-    <label class="block text-xs text-ink-muted">
-      {{ t('collage.watermarkFontSize') }}: {{ style.watermark.fontSize }}
-      <input
-        type="range"
-        min="12"
-        max="100"
-        :value="style.watermark.fontSize"
-        class="mt-1 w-full"
-        @input="patchWatermark({ fontSize: Number(($event.target as HTMLInputElement).value) })"
-      />
-    </label>
-    <label class="block text-xs text-ink-muted">
-      {{ t('collage.watermarkOpacity') }}: {{ style.watermark.opacity }}
-      <input
-        type="range"
-        min="0.05"
-        max="1"
-        step="0.05"
-        :value="style.watermark.opacity"
-        class="mt-1 w-full"
-        @input="patchWatermark({ opacity: Number(($event.target as HTMLInputElement).value) })"
-      />
-    </label>
-    <label class="block text-xs text-ink-muted">
-      {{ t('collage.watermarkRotation') }}: {{ style.watermark.rotation }}°
-      <input
-        type="range"
-        min="-90"
-        max="90"
-        step="5"
-        :value="style.watermark.rotation"
-        class="mt-1 w-full"
-        @input="patchWatermark({ rotation: Number(($event.target as HTMLInputElement).value) })"
-      />
-    </label>
+    <LabeledRange
+      :label="t('collage.watermarkFontSize')"
+      :model-value="style.watermark.fontSize"
+      :min="12"
+      :max="100"
+      @update:model-value="(v) => patchWatermark({ fontSize: v })"
+    />
+    <LabeledRange
+      :label="t('collage.watermarkOpacity')"
+      :model-value="style.watermark.opacity"
+      :min="0.05"
+      :max="1"
+      :step="0.05"
+      @update:model-value="(v) => patchWatermark({ opacity: v })"
+    />
+    <LabeledRange
+      :label="t('collage.watermarkRotation')"
+      :model-value="style.watermark.rotation"
+      :min="-90"
+      :max="90"
+      :step="5"
+      suffix="°"
+      @update:model-value="(v) => patchWatermark({ rotation: v })"
+    />
     <div>
       <div class="mb-1 text-xs text-ink-muted">{{ t('collage.watermarkMode') }}</div>
       <div class="grid grid-cols-2 gap-1">

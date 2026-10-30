@@ -3,6 +3,7 @@ import { computed, ref, watchEffect } from 'vue'
 import { RouterLink, RouterView } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { Globe, Monitor, Moon, Sun } from '@lucide/vue'
+import { useCollageStore } from '@/features/canvas'
 import {
   AppToast,
   MenuSelect,
@@ -15,6 +16,9 @@ import {
 } from '@/shared/ui'
 
 const { t, locale } = useI18n()
+
+// Hydrate collage style once so Collage + custom-layout routes share it.
+void useCollageStore().hydrateStyleFromStorage()
 
 const theme = ref<ThemeMode>(readStoredTheme())
 applyTheme(theme.value)

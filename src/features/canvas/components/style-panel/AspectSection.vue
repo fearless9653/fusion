@@ -11,6 +11,13 @@ import {
   isSamePrintSizePair,
 } from '@/features/export'
 import { PanelSection } from '@/shared/ui'
+import {
+  STYLE_PANEL_ASPECT_OPEN_KEY,
+  readStylePanelSectionOpen,
+  writeStylePanelSectionOpen,
+} from '@/features/canvas/stylePanelSectionCollapse'
+
+const sectionOpen = readStylePanelSectionOpen(STYLE_PANEL_ASPECT_OPEN_KEY, true)
 
 const { t } = useI18n()
 const collage = useCollageStore()
@@ -87,7 +94,11 @@ function swapAspect(): void {
 </script>
 
 <template>
-  <PanelSection :title="t('collage.aspect')">
+  <PanelSection
+    :title="t('collage.aspect')"
+    :initially-open="sectionOpen"
+    @toggle="(open) => writeStylePanelSectionOpen(STYLE_PANEL_ASPECT_OPEN_KEY, open)"
+  >
     <div>
       <div class="mb-1.5 text-[11px] font-medium tracking-wide text-ink-muted">
         {{ t('collage.aspectCommon') }}

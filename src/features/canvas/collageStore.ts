@@ -37,9 +37,19 @@ import {
   undoHistory,
 } from '@/entities/session'
 import type { HistoryStack } from '@/entities/session'
+import { i18n } from '@/app/plugins/i18n'
 import { useImageRegistry } from '@/features/images'
 import { normalizeFractions, redistributeAdjacent } from '@/shared/lib'
+import { showToast } from '@/shared/ui'
 import { rememberAppliedCustomLayout } from './customLayoutRegistry'
+import {
+  STYLE_BG_MARKER,
+  clearPersistedStyleAndBackground,
+  loadPersistedBackgroundBlob,
+  persistFullStyle,
+  readPersistedStyle,
+  writePersistedStyleJson,
+} from './stylePersistence'
 
 function cloneSession(state: CollageSessionState): CollageSessionState {
   // JSON round-trip: session is serializable and may be a Vue reactive proxy.
@@ -115,7 +125,22 @@ function orientationBakeCoalesceMs(): number {
   return orientationBakeCoalesceMsForTests ?? ORIENTATION_BAKE_COALESCE_MS
 }
 
+/** Debounce window for writing collage style to localStorage / IDB. */
+export const STYLE_PERSIST_DEBOUNCE_MS = 300
+
+let stylePersistDebounceMsForTests: number | null = null
+
+/** Test helper: set style persist debounce (null restores default). */
+export function setStylePersistDebounceMsForTests(ms: number | null): void {
+  stylePersistDebounceMsForTests = ms
+}
+
+function stylePersistDebounceMs(): number {
+  return stylePersistDebounceMsForTests ?? STYLE_PERSIST_DEBOUNCE_MS
+}
+
 export const useCollageStore = defineStore('collage', () => {
+  // History stack kept for tests/session model; UI undo/redo buttons were removed (no Ctrl+Z this batch).
   const history = ref<HistoryStack<CollageSessionState>>(
     createHistoryStack(createDefaultSessionState()),
   )
@@ -125,6 +150,60 @@ export const useCollageStore = defineStore('collage', () => {
 
   /** Serialize orientation bakes so rapid clicks do not race. */
   let bakeChain: Promise<void> = Promise.resolve()
+
+  let stylePersistTimer: ReturnType<typeof setTimeout> | null = null
+  let stylePersistChain: Promise<void> = Promise.resolve()
+  let suppressStylePersist = false
+  let styleHydrated = false
+
+  function clearStylePersistTimer(): void {
+    if (stylePersistTimer) {
+      clearTimeout(stylePersistTimer)
+      stylePersistTimer = null
+    }
+  }
+
+  async function resolveStyleBackgroundBlob(imageId: string): Promise<Blob | null> {
+    const entry = useImageRegistry().get(imageId)
+    if (!entry) return null
+    try {
+      const res = await fetch(entry.objectUrl)
+      if (!res.ok) return null
+      return await res.blob()
+    } catch {
+      return null
+    }
+  }
+
+  async function flushPersistStyle(): Promise<void> {
+    if (suppressStylePersist) return
+    const current = session.value.style
+    const result = await persistFullStyle(current, resolveStyleBackgroundBlob)
+    if (!result.ok && result.reason === 'quota') {
+      showToast(String(i18n.global.t('collage.stylePersistFailed')), 'error')
+    }
+  }
+
+  function schedulePersistStyle(immediate = false): void {
+    if (suppressStylePersist) return
+    clearStylePersistTimer()
+    const run = (): void => {
+      stylePersistTimer = null
+      stylePersistChain = stylePersistChain.then(() => flushPersistStyle()).catch(() => {})
+    }
+    if (immediate || stylePersistDebounceMs() <= 0) {
+      run()
+      return
+    }
+    stylePersistTimer = setTimeout(run, stylePersistDebounceMs())
+  }
+
+  /** Test helper: flush pending debounced style persistence. */
+  async function flushStylePersistForTests(): Promise<void> {
+    clearStylePersistTimer()
+    stylePersistChain = stylePersistChain.then(() => flushPersistStyle()).catch(() => {})
+    await stylePersistChain
+  }
 
   /** Latest pending canonical orientation per cell (coalesce rapid clicks). */
   const pendingOrientationByCell = new Map<number, CellImageTransform>()
@@ -224,6 +303,7 @@ export const useCollageStore = defineStore('collage', () => {
         draft.style.aspectRatio = { ...partial.aspectRatio }
       }
     })
+    schedulePersistStyle()
   }
 
   function setAspectRatio(
@@ -640,19 +720,74 @@ export const useCollageStore = defineStore('collage', () => {
   }
 
   function resetStyles(): void {
+    // Clear LS + IDB immediately so refresh stays at defaults.
+    // Keep registry bg blob for in-session undo; removeBg / replace dispose orphans.
+    clearStylePersistTimer()
     patchPresent((draft) => {
       draft.style = structuredClone(DEFAULT_STYLE)
     })
+    void clearPersistedStyleAndBackground().catch(() => {})
   }
 
   function undo(): void {
     history.value = undoHistory(history.value)
     void syncBakesAfterHistoryChange()
+    schedulePersistStyle()
   }
 
   function redo(): void {
     history.value = redoHistory(history.value)
     void syncBakesAfterHistoryChange()
+    schedulePersistStyle()
+  }
+
+  /**
+   * Load persisted style into the session (once).
+   * Safe to call from App bootstrap so Collage + editor routes share hydrate.
+   */
+  async function hydrateStyleFromStorage(): Promise<void> {
+    if (styleHydrated) return
+    styleHydrated = true
+    const stored = readPersistedStyle()
+    if (!stored) return
+
+    suppressStylePersist = true
+    try {
+      const wantsBg = stored.background.imageId === STYLE_BG_MARKER
+      const base = structuredClone(stored)
+      base.background.imageId = null
+      history.value = createHistoryStack({
+        ...cloneSession(session.value),
+        style: base,
+      })
+
+      if (!wantsBg) return
+
+      const blob = await loadPersistedBackgroundBlob()
+      if (!blob) {
+        // IDB miss → keep imageId null; rewrite LS without marker.
+        writePersistedStyleJson({
+          ...stored,
+          background: { ...stored.background, imageId: null },
+        })
+        return
+      }
+
+      const file = new File([blob], 'background', { type: blob.type || 'image/*' })
+      try {
+        const entry = await useImageRegistry().addFile(file)
+        const next = cloneSession(session.value)
+        next.style.background.imageId = entry.id
+        history.value = createHistoryStack(next)
+      } catch {
+        writePersistedStyleJson({
+          ...stored,
+          background: { ...stored.background, imageId: null },
+        })
+      }
+    } finally {
+      suppressStylePersist = false
+    }
   }
 
   /** Replace history with a fresh default session (tests / hard reset). */
@@ -664,6 +799,8 @@ export const useCollageStore = defineStore('collage', () => {
       coalesceTimer = null
     }
     coalesceWaiters = []
+    clearStylePersistTimer()
+    styleHydrated = false
     history.value = createHistoryStack(createDefaultSessionState())
   }
 
@@ -702,6 +839,8 @@ export const useCollageStore = defineStore('collage', () => {
     resetStyles,
     undo,
     redo,
+    hydrateStyleFromStorage,
+    flushStylePersistForTests,
     resetSession,
     syncBakesAfterHistoryChange,
   }

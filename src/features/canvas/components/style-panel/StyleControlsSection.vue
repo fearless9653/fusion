@@ -3,7 +3,14 @@ import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useCollageStore } from '@/features/canvas'
 import { useImageRegistry } from '@/features/images'
-import { PanelSection } from '@/shared/ui'
+import { LabeledRange, PanelSection } from '@/shared/ui'
+import {
+  STYLE_PANEL_STYLE_OPEN_KEY,
+  readStylePanelSectionOpen,
+  writeStylePanelSectionOpen,
+} from '@/features/canvas/stylePanelSectionCollapse'
+
+const sectionOpen = readStylePanelSectionOpen(STYLE_PANEL_STYLE_OPEN_KEY, false)
 
 const { t } = useI18n()
 const collage = useCollageStore()
@@ -36,38 +43,40 @@ async function onBgUpload(event: Event): Promise<void> {
   const file = input.files?.[0]
   input.value = ''
   if (!file) return
+  const prevId = style.value.background.imageId
   const added = await registry.addFile(file)
   collage.setStyle({ background: { ...style.value.background, imageId: added.id } })
+  if (prevId && prevId !== added.id) registry.remove(prevId)
 }
 function removeBg(): void {
+  const prevId = style.value.background.imageId
   collage.setStyle({ background: { ...style.value.background, imageId: null } })
+  if (prevId) registry.remove(prevId)
 }
 </script>
 
 <template>
-  <PanelSection :title="t('collage.style')" :initially-open="false">
-    <label class="block text-xs text-ink-muted">
-      {{ t('collage.spacing') }}: {{ style.spacing }}px
-      <input
-        type="range"
-        min="0"
-        max="80"
-        :value="style.spacing"
-        class="mt-1 w-full"
-        @input="setSpacing(Number(($event.target as HTMLInputElement).value))"
-      />
-    </label>
-    <label class="block text-xs text-ink-muted">
-      {{ t('collage.radius') }}: {{ style.radius }}px
-      <input
-        type="range"
-        min="0"
-        max="80"
-        :value="style.radius"
-        class="mt-1 w-full"
-        @input="setRadius(Number(($event.target as HTMLInputElement).value))"
-      />
-    </label>
+  <PanelSection
+    :title="t('collage.style')"
+    :initially-open="sectionOpen"
+    @toggle="(open) => writeStylePanelSectionOpen(STYLE_PANEL_STYLE_OPEN_KEY, open)"
+  >
+    <LabeledRange
+      :label="t('collage.spacing')"
+      :model-value="style.spacing"
+      :min="0"
+      :max="80"
+      suffix="px"
+      @update:model-value="setSpacing"
+    />
+    <LabeledRange
+      :label="t('collage.radius')"
+      :model-value="style.radius"
+      :min="0"
+      :max="80"
+      suffix="px"
+      @update:model-value="setRadius"
+    />
     <div>
       <div class="mb-1 text-xs text-ink-muted">{{ t('collage.borders') }}</div>
       <div class="grid grid-cols-4 gap-1">
