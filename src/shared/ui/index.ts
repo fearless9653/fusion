@@ -1,5 +1,6 @@
 ﻿export { default as AppToast } from './AppToast.vue'
 export { default as PanelSection } from './PanelSection.vue'
+export { default as LabeledRange } from './LabeledRange.vue'
 export { default as IconToolbarButton } from './IconToolbarButton.vue'
 export { default as CollapseEar } from './CollapseEar.vue'
 export { default as SidebarShell } from './SidebarShell.vue'

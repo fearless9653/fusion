@@ -1,16 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import {
-  SIDEBAR_EXPANDED_WIDTH_PX,
-  SIDEBAR_INSET_MIN_WIDTH_PX,
-  stageSidebarInsetsPx,
-} from './sidebarOverlayLayout'
+import { stageSidebarInsetsPx } from './sidebarOverlayLayout'
 
 describe('stageSidebarInsetsPx', () => {
-  it('exposes w-64 / lg tokens', () => {
-    expect(SIDEBAR_EXPANDED_WIDTH_PX).toBe(256)
-    expect(SIDEBAR_INSET_MIN_WIDTH_PX).toBe(1024)
-  })
-
   it('insets both sides when large and both expanded', () => {
     expect(stageSidebarInsetsPx(false, false, true)).toEqual({
       paddingLeft: 256,

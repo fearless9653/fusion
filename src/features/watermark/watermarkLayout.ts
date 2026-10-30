@@ -3,6 +3,7 @@
  */
 
 import type { WatermarkPosition, WatermarkStyle } from '@/entities/session'
+import { assertNever } from '@/shared/utils'
 
 export type WatermarkPoint = { x: number; y: number }
 
@@ -144,11 +145,12 @@ export function watermarkSingleAnchor(
     case 'bottom-right':
       return { x: xRange.max, y: yRange.max }
     case 'center':
-    default:
       return {
         x: Math.min(xRange.max, Math.max(xRange.min, cx)),
         y: Math.min(yRange.max, Math.max(yRange.min, cy)),
       }
+    default:
+      return assertNever(position)
   }
 }
 
