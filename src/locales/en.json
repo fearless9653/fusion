@@ -13,7 +13,6 @@
   },
   "collage": {
     "layouts": "Layouts",
-    "selectedCell": "Cell {n} selected",
     "pageDropTitle": "Drop to upload",
     "pageDropHint": "Empty cells fill in order",
     "collapseLeft": "Collapse left panel",
@@ -28,9 +27,8 @@
     "settings": "Settings",
     "clearAllImages": "Clear images",
     "clearAllImagesDone": "All cell images cleared",
-    "undo": "Undo",
-    "redo": "Redo",
     "resetStyles": "Reset styles",
+    "stylePersistFailed": "Could not save style (storage full)",
     "aspect": "Aspect ratio",
     "width": "W",
     "height": "H",
@@ -106,6 +104,8 @@
     "unfavoriteLayout": "Remove from favorites",
     "cellRotateCw": "Rotate 90°",
     "cellFlipHorizontal": "Flip horizontal",
+    "cellMoreActions": "Show more actions",
+    "cellActionsMenu": "More actions",
     "cellFlipVertical": "Flip vertical"
   },
   "customLayout": {

@@ -13,7 +13,6 @@
   },
   "collage": {
     "layouts": "布局模板",
-    "selectedCell": "选中第 {n} 格",
     "pageDropTitle": "松开以上传图片",
     "pageDropHint": "将按空格顺序填入拼贴",
     "collapseLeft": "收起左侧栏",
@@ -28,9 +27,8 @@
     "settings": "设置",
     "clearAllImages": "清空图片",
     "clearAllImagesDone": "已清空所有格内图片",
-    "undo": "撤销",
-    "redo": "重做",
     "resetStyles": "重置样式",
+    "stylePersistFailed": "样式保存失败（存储空间不足）",
     "aspect": "画幅比例",
     "width": "宽",
     "height": "高",
@@ -106,6 +104,8 @@
     "unfavoriteLayout": "取消收藏",
     "cellRotateCw": "旋转 90°",
     "cellFlipHorizontal": "左右镜像",
+    "cellMoreActions": "显示更多操作",
+    "cellActionsMenu": "更多操作",
     "cellFlipVertical": "上下镜像"
   },
   "customLayout": {
