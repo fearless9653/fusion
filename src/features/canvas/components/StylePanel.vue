@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Redo2, RotateCcw, Undo2 } from '@lucide/vue'
+import { RotateCcw } from '@lucide/vue'
 import { useCollageStore } from '@/features/canvas'
 import AspectSection from '@/features/canvas/components/style-panel/AspectSection.vue'
 import StyleControlsSection from '@/features/canvas/components/style-panel/StyleControlsSection.vue'
@@ -105,20 +105,6 @@ async function onCopy(): Promise<void> {
     >
       <h2 class="font-semibold text-ink">{{ t('collage.settings') }}</h2>
       <div class="flex gap-1">
-        <IconToolbarButton
-          :label="t('collage.undo')"
-          :disabled="!collage.undoAvailable"
-          @click="collage.undo()"
-        >
-          <Undo2 class="h-4 w-4" aria-hidden="true" />
-        </IconToolbarButton>
-        <IconToolbarButton
-          :label="t('collage.redo')"
-          :disabled="!collage.redoAvailable"
-          @click="collage.redo()"
-        >
-          <Redo2 class="h-4 w-4" aria-hidden="true" />
-        </IconToolbarButton>
         <IconToolbarButton :label="t('collage.resetStyles')" @click="collage.resetStyles()">
           <RotateCcw class="h-4 w-4" aria-hidden="true" />
         </IconToolbarButton>
