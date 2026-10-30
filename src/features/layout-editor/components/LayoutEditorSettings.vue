@@ -3,6 +3,7 @@ import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { House } from '@lucide/vue'
 import { RouterLink, useRouter } from 'vue-router'
+import { LAYOUT_STRING_MAX } from '@/entities/layout'
 import { MAX_GRID, MIN_GRID, useLayoutEditorStore } from '../layoutEditorStore'
 
 const { t } = useI18n()
@@ -66,6 +67,7 @@ function onUseLayout(): void {
         <input
           v-model="draftName"
           type="text"
+          :maxlength="LAYOUT_STRING_MAX"
           class="rounded-md border border-border bg-surface px-2 py-1.5 text-sm text-ink"
           @change="applyName"
           @keydown.enter.prevent="applyName"

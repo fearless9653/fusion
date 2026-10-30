@@ -29,6 +29,7 @@
     "clearAllImagesDone": "All cell images cleared",
     "resetStyles": "Reset styles",
     "stylePersistFailed": "Could not save style (storage full)",
+    "imageTooLarge": "Image too large (max 40 MB or 8192 px edge)",
     "aspect": "Aspect ratio",
     "width": "W",
     "height": "H",
@@ -135,6 +136,7 @@
     "applyJson": "Apply JSON",
     "copyJson": "Copy JSON",
     "copyJsonDone": "JSON copied",
-    "copyJsonFailed": "Could not copy JSON"
+    "copyJsonFailed": "Could not copy JSON",
+    "jsonTooLarge": "JSON is too large (max 256 KiB)"
   }
 }

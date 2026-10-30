@@ -143,8 +143,25 @@ function fitExactAspectMod10(ratio: AspectRatio, maxW: number, maxH: number): Ex
   const maxK = Math.min(Math.floor(maxW / rw), Math.floor(maxH / rh))
   let k = Math.floor(maxK / k0) * k0
   if (k < k0) {
-    // Box smaller than one mod-10 step — still emit the minimal exact mod-10 size.
-    k = k0
+    // Box smaller than one mod-10 step. Prefer the minimal exact mod-10 size when
+    // it only modestly overshoots (tiny maxEdge). Huge reduced components
+    // (e.g. custom 9998:9999) would make rw*k0 × rh*k0 OOM-scale — fail soft.
+    const candidateW = rw * k0
+    const candidateH = rh * k0
+    const softMax = Math.max(maxW, maxH, 1) * 2
+    if (candidateW <= softMax && candidateH <= softMax) {
+      k = k0
+    } else if (maxK >= 1) {
+      // Exact integer multiple of reduced ratio that fits; may not be mod-10.
+      k = maxK
+    } else {
+      // Reduced sides exceed the box — approximate fit within maxW×maxH.
+      const scale = Math.min(maxW / rw, maxH / rh)
+      return {
+        width: Math.max(1, Math.floor(rw * scale)),
+        height: Math.max(1, Math.floor(rh * scale)),
+      }
+    }
   }
   return { width: rw * k, height: rh * k }
 }

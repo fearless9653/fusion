@@ -1,6 +1,15 @@
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { DEFAULT_STYLE } from '@/entities/session'
+import {
+  ASPECT_SIDE_MAX,
+  DEFAULT_STYLE,
+  STYLE_LENGTH_MAX,
+  WATERMARK_DENSITY_MAX,
+  WATERMARK_FONT_SIZE_MAX,
+  WATERMARK_FONT_SIZE_MIN,
+  WATERMARK_ROTATION_MAX,
+  WATERMARK_ROTATION_MIN,
+} from '@/entities/session'
 import { useImageRegistry } from '@/features/images'
 import { setStylePersistDebounceMsForTests, useCollageStore } from './collageStore'
 import { resetStyleBackgroundIdbForTests } from './styleBackgroundIdb'
@@ -72,6 +81,72 @@ describe('stylePersistence', () => {
     })
     expect(parsed?.watermark.text).toBe(long.slice(0, 32))
     expect(parsed?.watermark.text.length).toBe(32)
+  })
+
+  it('parsePersistedStyle clamps watermark fontSize, rotation, and density to UI ranges', () => {
+    const parsed = parsePersistedStyle({
+      schemaVersion: 1,
+      style: {
+        ...DEFAULT_STYLE,
+        watermark: {
+          ...DEFAULT_STYLE.watermark,
+          fontSize: 999,
+          rotation: -180,
+          density: 99,
+        },
+      },
+    })
+    expect(parsed?.watermark.fontSize).toBe(WATERMARK_FONT_SIZE_MAX)
+    expect(parsed?.watermark.rotation).toBe(WATERMARK_ROTATION_MIN)
+    expect(parsed?.watermark.density).toBe(WATERMARK_DENSITY_MAX)
+
+    const low = parsePersistedStyle({
+      schemaVersion: 1,
+      style: {
+        ...DEFAULT_STYLE,
+        watermark: {
+          ...DEFAULT_STYLE.watermark,
+          fontSize: 1,
+          rotation: 180,
+          density: 0,
+        },
+      },
+    })
+    expect(low?.watermark.fontSize).toBe(WATERMARK_FONT_SIZE_MIN)
+    expect(low?.watermark.rotation).toBe(WATERMARK_ROTATION_MAX)
+    expect(low?.watermark.density).toBe(1)
+  })
+
+  it('parsePersistedStyle clamps aspect sides to ASPECT_SIDE_MAX', () => {
+    const parsed = parsePersistedStyle({
+      schemaVersion: 1,
+      style: {
+        ...DEFAULT_STYLE,
+        aspectRatio: { width: 50000, height: 0.5 },
+        aspectSource: 'custom',
+      },
+    })
+    expect(parsed?.aspectRatio).toEqual({ width: ASPECT_SIDE_MAX, height: 1 })
+  })
+
+  it('parsePersistedStyle clamps oversized spacing, radius, and borders to STYLE_LENGTH_MAX', () => {
+    const parsed = parsePersistedStyle({
+      schemaVersion: 1,
+      style: {
+        ...DEFAULT_STYLE,
+        spacing: 999,
+        radius: 120.6,
+        borders: { top: 100, right: -3, bottom: 80.4, left: 40.2 },
+      },
+    })
+    expect(parsed?.spacing).toBe(STYLE_LENGTH_MAX)
+    expect(parsed?.radius).toBe(STYLE_LENGTH_MAX)
+    expect(parsed?.borders).toEqual({
+      top: STYLE_LENGTH_MAX,
+      right: 0,
+      bottom: STYLE_LENGTH_MAX,
+      left: 40,
+    })
   })
 
   it('parsePersistedStyle drops unknown registry ids (no portable blob)', () => {
@@ -156,6 +231,46 @@ describe('useCollageStore style persistence', () => {
     expect(await loadPersistedBackgroundBlob()).toBeNull()
   })
 
+  it('setStyle clamps watermark fontSize, rotation, density and aspect sides', async () => {
+    const store = useCollageStore()
+    store.setStyle({
+      watermark: {
+        ...store.style.watermark,
+        fontSize: 500,
+        rotation: 120,
+        density: 9,
+      },
+      aspectRatio: { width: 20000, height: -3 },
+    })
+    expect(store.style.watermark.fontSize).toBe(WATERMARK_FONT_SIZE_MAX)
+    expect(store.style.watermark.rotation).toBe(WATERMARK_ROTATION_MAX)
+    expect(store.style.watermark.density).toBe(WATERMARK_DENSITY_MAX)
+    expect(store.style.aspectRatio).toEqual({ width: ASPECT_SIDE_MAX, height: 1 })
+    await store.flushStylePersistForTests()
+    expect(readPersistedStyle()?.watermark.fontSize).toBe(WATERMARK_FONT_SIZE_MAX)
+    expect(readPersistedStyle()?.aspectRatio.width).toBe(ASPECT_SIDE_MAX)
+  })
+
+  it('setStyle clamps spacing, radius, and borders to STYLE_LENGTH_MAX', async () => {
+    const store = useCollageStore()
+    store.setStyle({
+      spacing: 999,
+      radius: 81.2,
+      borders: { top: 100, right: -1, bottom: 80, left: 12.6 },
+    })
+    expect(store.style.spacing).toBe(STYLE_LENGTH_MAX)
+    expect(store.style.radius).toBe(STYLE_LENGTH_MAX)
+    expect(store.style.borders).toEqual({
+      top: STYLE_LENGTH_MAX,
+      right: 0,
+      bottom: STYLE_LENGTH_MAX,
+      left: 13,
+    })
+    await store.flushStylePersistForTests()
+    expect(readPersistedStyle()?.spacing).toBe(STYLE_LENGTH_MAX)
+    expect(readPersistedStyle()?.borders.top).toBe(STYLE_LENGTH_MAX)
+  })
+
   it('hydrate without IDB blob yields null imageId', async () => {
     writePersistedStyleJson({
       ...DEFAULT_STYLE,
@@ -217,5 +332,39 @@ describe('clearPersistedStyleJson', () => {
     expect(localStorage.getItem(STYLE_STORAGE_KEY)).toBeTruthy()
     clearPersistedStyleJson()
     expect(localStorage.getItem(STYLE_STORAGE_KEY)).toBeNull()
+  })
+  it('parsePersistedStyle accepts #RGB and normalizes to #rrggbb', () => {
+    const parsed = parsePersistedStyle({
+      schemaVersion: 1,
+      style: {
+        ...DEFAULT_STYLE,
+        background: { color: '#AbC', imageId: null },
+      },
+    })
+    expect(parsed?.background.color).toBe('#aabbcc')
+  })
+
+  it('parsePersistedStyle accepts #RRGGBB case-insensitively', () => {
+    const parsed = parsePersistedStyle({
+      schemaVersion: 1,
+      style: {
+        ...DEFAULT_STYLE,
+        background: { color: '#FfEeDd', imageId: null },
+      },
+    })
+    expect(parsed?.background.color).toBe('#ffeedd')
+  })
+
+  it('parsePersistedStyle falls back to default for invalid or overlong bg color', () => {
+    for (const color of ['red', '#gg0000', '#1234', '#1234567', 'transparent', '']) {
+      const parsed = parsePersistedStyle({
+        schemaVersion: 1,
+        style: {
+          ...DEFAULT_STYLE,
+          background: { color, imageId: null },
+        },
+      })
+      expect(parsed?.background.color).toBe(DEFAULT_STYLE.background.color)
+    }
   })
 })

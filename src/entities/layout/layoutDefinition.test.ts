@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { isFullCoverage, parseLayoutDefinition, safeParseLayoutDefinition } from './schema'
+import {
+  LAYOUT_STRING_MAX,
+  isFullCoverage,
+  parseLayoutDefinition,
+  safeParseLayoutDefinition,
+} from './schema'
 import type { LayoutDefinition } from './types'
 
 const validFourCell: LayoutDefinition = {
@@ -59,6 +64,20 @@ describe('layoutDefinitionSchema', () => {
       ],
     })
     expect(result.success).toBe(false)
+  })
+
+  it('truncates oversized id and name to LAYOUT_STRING_MAX on parse', () => {
+    const longId = 'i'.repeat(80)
+    const longName = 'n'.repeat(100)
+    const parsed = parseLayoutDefinition({
+      ...validFourCell,
+      id: longId,
+      name: longName,
+    })
+    expect(parsed.id).toBe(longId.slice(0, LAYOUT_STRING_MAX))
+    expect(parsed.id.length).toBe(LAYOUT_STRING_MAX)
+    expect(parsed.name).toBe(longName.slice(0, LAYOUT_STRING_MAX))
+    expect(parsed.name.length).toBe(LAYOUT_STRING_MAX)
   })
 
   it('accepts a non-full-coverage but non-overlapping layout structurally', () => {

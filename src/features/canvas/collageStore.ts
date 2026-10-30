@@ -14,6 +14,12 @@ import type {
 import {
   DEFAULT_STYLE,
   WATERMARK_TEXT_MAX_LENGTH,
+  clampAspectSide,
+  clampStyleLength,
+  sanitizeBackgroundColor,
+  clampWatermarkDensity,
+  clampWatermarkFontSize,
+  clampWatermarkRotation,
   canRedo,
   canUndo,
   createDefaultSessionState,
@@ -285,13 +291,28 @@ export const useCollageStore = defineStore('collage', () => {
   function setStyle(partial: Partial<CollageStyle>): void {
     patchPresent((draft) => {
       draft.style = { ...draft.style, ...structuredClone(partial) }
+      if (partial.spacing !== undefined) {
+        draft.style.spacing = clampStyleLength(draft.style.spacing)
+      }
+      if (partial.radius !== undefined) {
+        draft.style.radius = clampStyleLength(draft.style.radius)
+      }
       if (partial.borders) {
-        draft.style.borders = { ...draft.style.borders, ...partial.borders }
+        const borders = { ...draft.style.borders, ...partial.borders }
+        draft.style.borders = {
+          top: clampStyleLength(borders.top),
+          right: clampStyleLength(borders.right),
+          bottom: clampStyleLength(borders.bottom),
+          left: clampStyleLength(borders.left),
+        }
       }
       if (partial.background) {
         draft.style.background = {
           ...draft.style.background,
           ...partial.background,
+        }
+        if (partial.background.color !== undefined) {
+          draft.style.background.color = sanitizeBackgroundColor(draft.style.background.color)
         }
       }
       if (partial.watermark) {
@@ -302,10 +323,16 @@ export const useCollageStore = defineStore('collage', () => {
         if (typeof watermark.text === 'string') {
           watermark.text = watermark.text.slice(0, WATERMARK_TEXT_MAX_LENGTH)
         }
+        watermark.fontSize = clampWatermarkFontSize(watermark.fontSize)
+        watermark.rotation = clampWatermarkRotation(watermark.rotation)
+        watermark.density = clampWatermarkDensity(watermark.density)
         draft.style.watermark = watermark
       }
       if (partial.aspectRatio) {
-        draft.style.aspectRatio = { ...partial.aspectRatio }
+        draft.style.aspectRatio = {
+          width: clampAspectSide(partial.aspectRatio.width),
+          height: clampAspectSide(partial.aspectRatio.height),
+        }
       }
     })
     schedulePersistStyle()
@@ -780,7 +807,7 @@ export const useCollageStore = defineStore('collage', () => {
 
       const file = new File([blob], 'background', { type: blob.type || 'image/*' })
       try {
-        const entry = await useImageRegistry().addFile(file)
+        const entry = await useImageRegistry().addFile(file, { bypassLimits: true })
         const next = cloneSession(session.value)
         next.style.background.imageId = entry.id
         history.value = createHistoryStack(next)

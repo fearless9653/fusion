@@ -156,7 +156,8 @@ async function onCellFilesSelected(event: Event): Promise<void> {
   const files = imageFilesFromList(input.files)
   input.value = ''
   if (start === null || !files.length || !collage.layout) return
-  const added = await registry.addFiles(files)
+  const { added, rejected } = await registry.addFiles(files)
+  if (rejected.length) showToast(t('collage.imageTooLarge'), 'error')
   assignImagesFromIndex(
     collage.cellImages,
     added.map((img) => img.id),
@@ -181,7 +182,8 @@ async function onCellDrop(event: DragEvent, index: number): Promise<void> {
   collage.selectCell(index)
   const files = imageFilesFromList(event.dataTransfer?.files)
   if (!files.length || !collage.layout) return
-  const added = await registry.addFiles(files)
+  const { added, rejected } = await registry.addFiles(files)
+  if (rejected.length) showToast(t('collage.imageTooLarge'), 'error')
   assignImagesFromIndex(
     collage.cellImages,
     added.map((img) => img.id),

@@ -28,6 +28,52 @@ export type WatermarkPosition = 'center' | 'top-left' | 'top-right' | 'bottom-le
 /** Max watermark label length (UTF-16 code units / string.length / HTML maxlength). */
 export const WATERMARK_TEXT_MAX_LENGTH = 32
 
+/** Max for spacing, radius, and per-side borders (preview CSS px; UI range + hydrate clamp). */
+export const STYLE_LENGTH_MAX = 80
+
+/** Round to integer then clamp to 0..STYLE_LENGTH_MAX (spacing/radius/borders step=1). */
+export function clampStyleLength(value: number): number {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return 0
+  return Math.min(STYLE_LENGTH_MAX, Math.max(0, Math.round(value)))
+}
+
+/** Max custom aspect width/height side (UI max + store/hydrate clamp). */
+export const ASPECT_SIDE_MIN = 1
+export const ASPECT_SIDE_MAX = 9999
+
+/** Clamp one aspect side to 1..ASPECT_SIDE_MAX; non-finite / non-positive → ASPECT_SIDE_MIN. */
+export function clampAspectSide(value: number): number {
+  if (typeof value !== 'number' || !Number.isFinite(value) || !(value > 0)) return ASPECT_SIDE_MIN
+  return Math.min(ASPECT_SIDE_MAX, Math.max(ASPECT_SIDE_MIN, value))
+}
+
+/** Watermark fontSize UI range (LabeledRange 12–100); persist/hydrate prefer this over draw's Math.max(8,…). */
+export const WATERMARK_FONT_SIZE_MIN = 12
+export const WATERMARK_FONT_SIZE_MAX = 100
+
+/** Watermark rotation UI range (degrees). */
+export const WATERMARK_ROTATION_MIN = -90
+export const WATERMARK_ROTATION_MAX = 90
+
+/** Watermark tile density (draw clamps 1–5; UI buttons 1/2/4). */
+export const WATERMARK_DENSITY_MIN = 1
+export const WATERMARK_DENSITY_MAX = 5
+
+export function clampWatermarkFontSize(value: number): number {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return WATERMARK_FONT_SIZE_MIN
+  return Math.min(WATERMARK_FONT_SIZE_MAX, Math.max(WATERMARK_FONT_SIZE_MIN, value))
+}
+
+export function clampWatermarkRotation(value: number): number {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return 0
+  return Math.min(WATERMARK_ROTATION_MAX, Math.max(WATERMARK_ROTATION_MIN, value))
+}
+
+export function clampWatermarkDensity(value: number): number {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return WATERMARK_DENSITY_MIN
+  return Math.min(WATERMARK_DENSITY_MAX, Math.max(WATERMARK_DENSITY_MIN, Math.round(value)))
+}
+
 /**
  * Watermark overlay settings.
  * `density` is a relative packing factor (1 = sparse … 5 = dense) for `mode: 'tile'`.
@@ -159,6 +205,28 @@ export const DEFAULT_STYLE: CollageStyle = {
     position: 'center',
   },
   downloadQuality: 'high-jpg',
+}
+
+/** Accept #RGB / #RRGGBB (case-insensitive); invalid or overlong → fallback. */
+const BG_HEX_RE = /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/
+
+/**
+ * Sanitize a background color from hydrate / setStyle.
+ * Color picker outputs #rrggbb; DEFAULT is #ffffff. `transparent` is not used for bg.
+ */
+export function sanitizeBackgroundColor(
+  raw: unknown,
+  fallback: string = DEFAULT_STYLE.background.color,
+): string {
+  if (typeof raw !== 'string') return fallback
+  const trimmed = raw.trim()
+  if (!BG_HEX_RE.test(trimmed)) return fallback
+  const hex = trimmed.slice(1)
+  if (hex.length === 3) {
+    const [r, g, b] = hex.toLowerCase().split('') as [string, string, string]
+    return `#${r}${r}${g}${g}${b}${b}`
+  }
+  return `#${hex.toLowerCase()}`
 }
 
 /** Clamp / coerce cell scale into the supported range. */

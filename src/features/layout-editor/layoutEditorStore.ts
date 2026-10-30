@@ -9,8 +9,10 @@ import {
   moveCell,
   removeCell,
   resizeCell,
+  LAYOUT_STRING_MAX,
   safeParseLayoutDefinition,
   withSyncedImageCount,
+  inBounds,
 } from '@/entities/layout'
 import {
   clearLayoutEditorDraft,
@@ -20,6 +22,7 @@ import {
 import { rememberAppliedCustomLayout } from '@/features/canvas/customLayoutRegistry'
 import { writeCustomLayoutHandoff } from './handoff'
 import { normalizeLayoutJsonText } from './jsonText'
+import { LAYOUT_JSON_MAX_BYTES, isLayoutJsonOversize } from '@/shared/lib/boundaryLimits'
 
 export const DEFAULT_EDITOR_ROWS = 6
 export const DEFAULT_EDITOR_COLS = 6
@@ -113,7 +116,8 @@ export const useLayoutEditorStore = defineStore('layoutEditor', () => {
   }
 
   function setName(value: string): void {
-    name.value = value.trim() || 'Custom'
+    const trimmed = value.trim() || 'Custom'
+    name.value = trimmed.slice(0, LAYOUT_STRING_MAX)
     persistDraft()
   }
 
@@ -200,11 +204,21 @@ export const useLayoutEditorStore = defineStore('layoutEditor', () => {
     validationErrors.value = []
   }
 
+  function rejectJsonTooLarge(): void {
+    const msg = `JSON exceeds ${LAYOUT_JSON_MAX_BYTES} bytes (256 KiB limit)`
+    validationErrors.value = [msg]
+    lastOpError.value = msg
+  }
+
   function importJson(text: string): boolean {
     const normalized = normalizeLayoutJsonText(text)
     if (!normalized) {
       validationErrors.value = ['JSON text is empty']
       lastOpError.value = 'JSON text is empty'
+      return false
+    }
+    if (isLayoutJsonOversize(normalized)) {
+      rejectJsonTooLarge()
       return false
     }
     let raw: unknown
@@ -266,9 +280,10 @@ export const useLayoutEditorStore = defineStore('layoutEditor', () => {
     }
     rows.value = clampGrid(draft.grid.rows)
     cols.value = clampGrid(draft.grid.cols)
-    id.value = draft.id
-    name.value = draft.name
-    cells.value = draft.cells.map((c) => ({ ...c }))
+    id.value = draft.id.slice(0, LAYOUT_STRING_MAX)
+    name.value = (draft.name.trim() || 'Custom').slice(0, LAYOUT_STRING_MAX)
+    const grid = { rows: rows.value, cols: cols.value }
+    cells.value = draft.cells.map((c) => ({ ...c })).filter((c) => inBounds(c, grid))
     const sel = draft.selectedIndex
     selectedIndex.value = sel !== null && sel >= 0 && sel < cells.value.length ? sel : null
     lastOpError.value = null
@@ -304,6 +319,7 @@ export const useLayoutEditorStore = defineStore('layoutEditor', () => {
     autoFill,
     resetLayout,
     importJson,
+    rejectJsonTooLarge,
     clearValidation,
     useThisLayout,
     loadDraftOrDefault,

@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ArrowLeftRight } from '@lucide/vue'
+import { ASPECT_SIDE_MAX, ASPECT_SIDE_MIN, clampAspectSide } from '@/entities/session'
 import { useCollageStore } from '@/features/canvas'
 import {
   ASPECT_RATIO_PRESETS,
@@ -31,6 +32,10 @@ function isValidPositiveAspect(n: number | ''): n is number {
   return typeof n === 'number' && Number.isFinite(n) && n > 0
 }
 
+function clampCustomDraft(n: number): number {
+  return clampAspectSide(n)
+}
+
 const canApplyCustomAspect = computed(
   () => isValidPositiveAspect(customW.value) && isValidPositiveAspect(customH.value),
 )
@@ -47,8 +52,8 @@ function setPrintAspect(w: number, h: number, printId: string): void {
 }
 function applyCustomAspect(): void {
   if (!isValidPositiveAspect(customW.value) || !isValidPositiveAspect(customH.value)) return
-  const w = customW.value
-  const h = customH.value
+  const w = clampCustomDraft(customW.value)
+  const h = clampCustomDraft(customH.value)
   customW.value = w
   customH.value = h
   collage.setAspectRatio(w, h, null, 'custom')
@@ -79,17 +84,17 @@ function swapAspect(): void {
 
   // custom: swap draft inputs when present; otherwise flip applied store ratio
   if (isValidPositiveAspect(customW.value) && isValidPositiveAspect(customH.value)) {
-    const w = customW.value
-    const h = customH.value
+    const w = clampCustomDraft(customW.value)
+    const h = clampCustomDraft(customH.value)
     customW.value = h
     customH.value = w
     collage.setAspectRatio(h, w, null, 'custom')
     return
   }
   const { width: w, height: h } = style.value.aspectRatio
-  customW.value = h
-  customH.value = w
-  collage.setAspectRatio(h, w, null, 'custom')
+  customW.value = clampCustomDraft(h)
+  customH.value = clampCustomDraft(w)
+  collage.setAspectRatio(customW.value, customH.value, null, 'custom')
 }
 </script>
 
@@ -158,7 +163,8 @@ function swapAspect(): void {
           <input
             v-model.number="customW"
             type="number"
-            min="1"
+            :min="ASPECT_SIDE_MIN"
+            :max="ASPECT_SIDE_MAX"
             class="box-border h-9 min-w-0 flex-1 rounded-md border border-border bg-surface px-2 text-sm leading-none text-ink"
           />
         </label>
@@ -167,7 +173,8 @@ function swapAspect(): void {
           <input
             v-model.number="customH"
             type="number"
-            min="1"
+            :min="ASPECT_SIDE_MIN"
+            :max="ASPECT_SIDE_MAX"
             class="box-border h-9 min-w-0 flex-1 rounded-md border border-border bg-surface px-2 text-sm leading-none text-ink"
           />
         </label>

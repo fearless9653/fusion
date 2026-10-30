@@ -1,3 +1,5 @@
+import { LAYOUT_STRING_MAX } from '@/entities/layout'
+import { LAYOUT_JSON_MAX_BYTES } from '@/shared/lib/boundaryLimits'
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { createUnitGridCells, isFullCoverage } from '@/entities/layout'
@@ -153,6 +155,15 @@ describe('useLayoutEditorStore', () => {
     expect(store.validationErrors.length).toBeGreaterThan(0)
   })
 
+  it('setName truncates to LAYOUT_STRING_MAX after trim', () => {
+    const store = useLayoutEditorStore()
+    store.setName('  ' + 'A'.repeat(80) + '  ')
+    expect(store.name.length).toBe(LAYOUT_STRING_MAX)
+    expect(store.name).toBe('A'.repeat(LAYOUT_STRING_MAX))
+    store.setName('   ')
+    expect(store.name).toBe('Custom')
+  })
+
   it('autosaves draft and restores via loadDraftOrDefault', () => {
     const store = useLayoutEditorStore()
     store.initGrid(5, 5)
@@ -180,5 +191,13 @@ describe('useLayoutEditorStore', () => {
     expect(store.cols).toBe(4)
     expect(store.cells).toHaveLength(0)
     expect(store.selectedIndex).toBeNull()
+  })
+  it('rejects JSON over the soft byte cap before parse', () => {
+    const store = useLayoutEditorStore()
+    store.initGrid(2, 2)
+    const huge = '{"x":"' + 'a'.repeat(LAYOUT_JSON_MAX_BYTES) + '"}'
+    expect(store.importJson(huge)).toBe(false)
+    expect(store.lastOpError).toMatch(/256 KiB/)
+    expect(store.validationErrors[0]).toMatch(/256 KiB/)
   })
 })

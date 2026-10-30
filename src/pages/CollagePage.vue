@@ -15,7 +15,7 @@ import {
 import { useStageSidebarInsets } from '@/features/canvas/composables/useStageSidebarInsets'
 import { fillEmptyCells, imageFilesFromList, isFileDrag, useImageRegistry } from '@/features/images'
 import { clearCustomLayoutHandoff, readCustomLayoutHandoff } from '@/features/layout-editor'
-import { SidebarShell } from '@/shared/ui'
+import { SidebarShell, showToast } from '@/shared/ui'
 
 const { t } = useI18n()
 const collage = useCollageStore()
@@ -102,7 +102,8 @@ async function onPageDrop(event: DragEvent): Promise<void> {
   pageDropActive.value = false
   const files = imageFilesFromList(event.dataTransfer?.files)
   if (!files.length || !collage.layout) return
-  const added = await registry.addFiles(files)
+  const { added, rejected } = await registry.addFiles(files)
+  if (rejected.length) showToast(t('collage.imageTooLarge'), 'error')
   fillEmptyCells(
     collage.cellImages,
     added.map((img) => img.id),

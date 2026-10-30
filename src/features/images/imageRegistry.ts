@@ -7,6 +7,30 @@ import {
 } from '@/entities/session'
 import { decodeImage } from '@/shared/workers'
 import { bakeOrientedImage, isIdentityOrientation } from './bakeOrientedImage'
+import { IMAGE_FILE_MAX_BYTES, IMAGE_MAX_EDGE_PX } from '@/shared/lib/boundaryLimits'
+
+export type ImageAddRejectReason = 'file_size' | 'dimensions'
+
+/** Soft-reject oversized user uploads (crash guard; not a cloud upload limit). */
+export class ImageAddRejectedError extends Error {
+  readonly reason: ImageAddRejectReason
+  readonly fileName: string
+  constructor(reason: ImageAddRejectReason, fileName: string) {
+    const label =
+      reason === 'file_size'
+        ? `file exceeds ${IMAGE_FILE_MAX_BYTES} bytes`
+        : `edge exceeds ${IMAGE_MAX_EDGE_PX}px`
+    super(`Image rejected (${label}): ${fileName}`)
+    this.name = 'ImageAddRejectedError'
+    this.reason = reason
+    this.fileName = fileName
+  }
+}
+
+export type AddFileOptions = {
+  /** Skip soft size/edge caps (e.g. hydrate from already-persisted IDB blob). */
+  bypassLimits?: boolean
+}
 
 export type RegisteredImage = {
   id: string
@@ -28,6 +52,11 @@ export type RegisteredImage = {
    * Null for originals.
    */
   bakeTransform: CellImageTransform | null
+}
+
+export type AddFilesResult = {
+  added: RegisteredImage[]
+  rejected: ImageAddRejectedError[]
 }
 
 let idSeq = 0
@@ -77,7 +106,12 @@ export const useImageRegistry = defineStore('imageRegistry', () => {
     return ids
   }
 
-  async function addFile(file: File): Promise<RegisteredImage> {
+  async function addFile(file: File, options?: AddFileOptions): Promise<RegisteredImage> {
+    const bypass = Boolean(options?.bypassLimits)
+    const fileName = file.name || 'image'
+    if (!bypass && file.size > IMAGE_FILE_MAX_BYTES) {
+      throw new ImageAddRejectedError('file_size', fileName)
+    }
     loadingCount.value += 1
     try {
       const objectUrl = URL.createObjectURL(file)
@@ -94,6 +128,11 @@ export const useImageRegistry = defineStore('imageRegistry', () => {
         const size = await probeImageSize(objectUrl)
         width = size.width
         height = size.height
+      }
+      if (!bypass && (width > IMAGE_MAX_EDGE_PX || height > IMAGE_MAX_EDGE_PX)) {
+        URL.revokeObjectURL(objectUrl)
+        bitmap?.close?.()
+        throw new ImageAddRejectedError('dimensions', fileName)
       }
       const entry: RegisteredImage = {
         id: nextImageId(),
@@ -113,13 +152,22 @@ export const useImageRegistry = defineStore('imageRegistry', () => {
     }
   }
 
-  async function addFiles(files: FileList | File[]): Promise<RegisteredImage[]> {
+  async function addFiles(files: FileList | File[]): Promise<AddFilesResult> {
     const listFiles = Array.from(files).filter((f) => f.type.startsWith('image/'))
     const added: RegisteredImage[] = []
+    const rejected: ImageAddRejectedError[] = []
     for (const file of listFiles) {
-      added.push(await addFile(file))
+      try {
+        added.push(await addFile(file))
+      } catch (err) {
+        if (err instanceof ImageAddRejectedError) {
+          rejected.push(err)
+          continue
+        }
+        throw err
+      }
     }
-    return added
+    return { added, rejected }
   }
 
   /** Find an existing bake of sourceId with the same canonical orientation. */

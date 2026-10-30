@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { STYLE_LENGTH_MAX, clampStyleLength } from '@/entities/session'
 import { useCollageStore } from '@/features/canvas'
-import { useImageRegistry } from '@/features/images'
-import { LabeledRange, PanelSection } from '@/shared/ui'
+import { ImageAddRejectedError, useImageRegistry } from '@/features/images'
+import { LabeledRange, PanelSection, showToast } from '@/shared/ui'
 import {
   STYLE_PANEL_STYLE_OPEN_KEY,
   readStylePanelSectionOpen,
@@ -26,13 +27,13 @@ const BORDER_SIDE_GLYPH: Record<'top' | 'right' | 'bottom' | 'left', string> = {
 }
 
 function setSpacing(v: number): void {
-  collage.setStyle({ spacing: v })
+  collage.setStyle({ spacing: clampStyleLength(v) })
 }
 function setRadius(v: number): void {
-  collage.setStyle({ radius: v })
+  collage.setStyle({ radius: clampStyleLength(v) })
 }
 function setBorder(side: 'top' | 'right' | 'bottom' | 'left', v: number): void {
-  collage.setStyle({ borders: { ...style.value.borders, [side]: Math.max(0, v) } })
+  collage.setStyle({ borders: { ...style.value.borders, [side]: clampStyleLength(v) } })
 }
 function setBgColor(color: string): void {
   collage.setStyle({ background: { ...style.value.background, color } })
@@ -44,9 +45,17 @@ async function onBgUpload(event: Event): Promise<void> {
   input.value = ''
   if (!file) return
   const prevId = style.value.background.imageId
-  const added = await registry.addFile(file)
-  collage.setStyle({ background: { ...style.value.background, imageId: added.id } })
-  if (prevId && prevId !== added.id) registry.remove(prevId)
+  try {
+    const added = await registry.addFile(file)
+    collage.setStyle({ background: { ...style.value.background, imageId: added.id } })
+    if (prevId && prevId !== added.id) registry.remove(prevId)
+  } catch (err) {
+    if (err instanceof ImageAddRejectedError) {
+      showToast(t('collage.imageTooLarge'), 'error')
+      return
+    }
+    throw err
+  }
 }
 function removeBg(): void {
   const prevId = style.value.background.imageId
@@ -65,7 +74,7 @@ function removeBg(): void {
       :label="t('collage.spacing')"
       :model-value="style.spacing"
       :min="0"
-      :max="80"
+      :max="STYLE_LENGTH_MAX"
       suffix="px"
       @update:model-value="setSpacing"
     />
@@ -73,7 +82,7 @@ function removeBg(): void {
       :label="t('collage.radius')"
       :model-value="style.radius"
       :min="0"
-      :max="80"
+      :max="STYLE_LENGTH_MAX"
       suffix="px"
       @update:model-value="setRadius"
     />
@@ -89,6 +98,7 @@ function removeBg(): void {
           <input
             type="number"
             min="0"
+            :max="STYLE_LENGTH_MAX"
             class="mt-0.5 w-full rounded border border-border bg-surface px-1 py-1 text-center text-xs text-ink"
             :value="style.borders[side]"
             :aria-label="side"

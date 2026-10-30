@@ -331,4 +331,11 @@ describe('useCollageStore', () => {
       ),
     ).toBe(true)
   })
+  it('setStyle sanitizes invalid background color to default', () => {
+    const store = useCollageStore()
+    store.setStyle({ background: { color: 'not-a-color', imageId: null } })
+    expect(store.style.background.color).toBe('#ffffff')
+    store.setStyle({ background: { color: '#Ab0', imageId: null } })
+    expect(store.style.background.color).toBe('#aabb00')
+  })
 })

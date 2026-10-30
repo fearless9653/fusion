@@ -103,6 +103,23 @@ describe('computeExportSize', () => {
     expect(size).toEqual({ width: 1000, height: 500 })
     expectExactAspectMod10(size, ratio)
   })
+
+  it('does not emit OOM-scale canvas when reduced components force k0 mega fallback', () => {
+    // Coprime-ish huge sides: without the soft guard, k=k0 yields ~99980×99990.
+    const ratio = { width: 9998, height: 9999 }
+    const maxEdge = QUALITY_MAX_EDGE['high-jpg']
+    const size = computeExportSize({
+      aspectRatio: ratio,
+      quality: 'high-jpg',
+    })
+    expect(size.width).toBeLessThanOrEqual(maxEdge)
+    expect(size.height).toBeLessThanOrEqual(maxEdge)
+    expect(size.width).toBeGreaterThan(0)
+    expect(size.height).toBeGreaterThan(0)
+    // Must stay far below the old mega fallback (~1e5 per side).
+    expect(size.width).toBeLessThan(maxEdge * 2)
+    expect(size.height).toBeLessThan(maxEdge * 2)
+  })
 })
 
 describe('print size portrait UI helpers', () => {

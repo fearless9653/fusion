@@ -2,6 +2,14 @@ import { z } from 'zod'
 import { cellsOverlap, inBounds, isFullCoverage as checkFullCoverage } from './ops'
 import type { LayoutDefinition } from './types'
 
+/** Max length for layout id and name (UI maxlength + zod; JSON import truncates). */
+export const LAYOUT_STRING_MAX = 64
+
+/** Truncate string fields to LAYOUT_STRING_MAX (matches watermark text hydrate). */
+function truncateLayoutString(value: unknown): unknown {
+  return typeof value === 'string' ? value.slice(0, LAYOUT_STRING_MAX) : value
+}
+
 const layoutCellSchema = z.object({
   row: z.number().int().nonnegative(),
   col: z.number().int().nonnegative(),
@@ -22,8 +30,10 @@ const layoutGridSchema = z.object({
 export const layoutDefinitionSchema = z
   .object({
     schemaVersion: z.literal(1),
-    id: z.string().min(1),
-    name: z.string().min(1),
+    // Truncate oversized ids/names on import (same spirit as watermark text clamp),
+    // then enforce .max(64). Reject empty after truncate via .min(1).
+    id: z.preprocess(truncateLayoutString, z.string().min(1).max(LAYOUT_STRING_MAX)),
+    name: z.preprocess(truncateLayoutString, z.string().min(1).max(LAYOUT_STRING_MAX)),
     imageCount: z.number().int().nonnegative(),
     grid: layoutGridSchema,
     cells: z.array(layoutCellSchema).min(1),

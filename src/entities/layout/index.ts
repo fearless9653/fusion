@@ -1,5 +1,6 @@
 export type { LayoutCell, LayoutDefinition, LayoutGrid } from './types'
 export {
+  LAYOUT_STRING_MAX,
   isFullCoverage,
   layoutDefinitionSchema,
   parseLayoutDefinition,

@@ -3,6 +3,7 @@ import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Check, Copy } from '@lucide/vue'
 import { showToast } from '@/shared/ui'
+import { LAYOUT_JSON_MAX_BYTES } from '@/shared/lib/boundaryLimits'
 import { useLayoutEditorStore } from '../layoutEditorStore'
 
 const { t } = useI18n()
@@ -40,10 +41,19 @@ async function onFileChange(event: Event): Promise<void> {
   const file = input.files?.[0]
   input.value = ''
   if (!file) return
+  if (file.size > LAYOUT_JSON_MAX_BYTES) {
+    const msg = t('customLayout.jsonTooLarge')
+    editor.rejectJsonTooLarge()
+    showToast(msg, 'error')
+    return
+  }
   const text = await file.text()
   importText.value = text
   jsonDirty.value = false
-  editor.importJson(text)
+  const ok = editor.importJson(text)
+  if (!ok && editor.lastOpError?.includes('256 KiB')) {
+    showToast(t('customLayout.jsonTooLarge'), 'error')
+  }
 }
 
 function onTextInput(): void {
@@ -60,6 +70,10 @@ function applyPaste(): void {
   if (ok) {
     importText.value = editor.jsonPreview
     jsonDirty.value = false
+    return
+  }
+  if (editor.lastOpError?.includes('256 KiB')) {
+    showToast(t('customLayout.jsonTooLarge'), 'error')
   }
 }
 

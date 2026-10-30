@@ -1,4 +1,5 @@
 import type { LayoutCell, LayoutGrid } from '@/entities/layout'
+import { inBounds } from '@/entities/layout'
 
 /** localStorage key for editor draft autosave (optional UX). */
 export const CUSTOM_LAYOUT_DRAFT_KEY = 'fusion:custom-layout-draft'
@@ -44,12 +45,14 @@ export function readLayoutEditorDraft(): LayoutEditorDraft | null {
       id: typeof parsed.id === 'string' && parsed.id ? parsed.id : `custom_${Date.now()}`,
       name: typeof parsed.name === 'string' && parsed.name ? parsed.name : 'Custom',
       grid: { rows, cols },
-      cells: parsed.cells.map((c) => ({
-        row: Number(c.row),
-        col: Number(c.col),
-        rowSpan: Number(c.rowSpan),
-        colSpan: Number(c.colSpan),
-      })),
+      cells: parsed.cells
+        .map((c) => ({
+          row: Number(c.row),
+          col: Number(c.col),
+          rowSpan: Number(c.rowSpan),
+          colSpan: Number(c.colSpan),
+        }))
+        .filter((c) => inBounds(c, { rows, cols })),
       selectedIndex:
         parsed.selectedIndex === null || parsed.selectedIndex === undefined
           ? null

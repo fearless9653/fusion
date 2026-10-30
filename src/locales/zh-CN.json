@@ -29,6 +29,7 @@
     "clearAllImagesDone": "已清空所有格内图片",
     "resetStyles": "重置样式",
     "stylePersistFailed": "样式保存失败（存储空间不足）",
+    "imageTooLarge": "图片过大（单文件约 40 MB 或最长边 8192 像素）",
     "aspect": "画幅比例",
     "width": "宽",
     "height": "高",
@@ -135,6 +136,7 @@
     "applyJson": "应用 JSON",
     "copyJson": "复制 JSON",
     "copyJsonDone": "已复制 JSON",
-    "copyJsonFailed": "复制失败"
+    "copyJsonFailed": "复制失败",
+    "jsonTooLarge": "JSON 过大（上限 256 KiB）"
   }
 }

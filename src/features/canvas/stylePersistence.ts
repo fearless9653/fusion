@@ -9,7 +9,16 @@ import type {
   WatermarkPosition,
   WatermarkStyle,
 } from '@/entities/session'
-import { DEFAULT_STYLE, WATERMARK_TEXT_MAX_LENGTH } from '@/entities/session'
+import {
+  DEFAULT_STYLE,
+  WATERMARK_TEXT_MAX_LENGTH,
+  clampAspectSide,
+  clampStyleLength,
+  clampWatermarkDensity,
+  clampWatermarkFontSize,
+  clampWatermarkRotation,
+  sanitizeBackgroundColor,
+} from '@/entities/session'
 import {
   deleteStyleBackgroundBlob,
   getStyleBackgroundBlob,
@@ -62,10 +71,10 @@ function parseBorders(raw: unknown, fallback: BorderWidths): BorderWidths {
   if (!raw || typeof raw !== 'object') return { ...fallback }
   const o = raw as Record<string, unknown>
   return {
-    top: Math.max(0, asFiniteNumber(o.top, fallback.top)),
-    right: Math.max(0, asFiniteNumber(o.right, fallback.right)),
-    bottom: Math.max(0, asFiniteNumber(o.bottom, fallback.bottom)),
-    left: Math.max(0, asFiniteNumber(o.left, fallback.left)),
+    top: clampStyleLength(asFiniteNumber(o.top, fallback.top)),
+    right: clampStyleLength(asFiniteNumber(o.right, fallback.right)),
+    bottom: clampStyleLength(asFiniteNumber(o.bottom, fallback.bottom)),
+    left: clampStyleLength(asFiniteNumber(o.left, fallback.left)),
   }
 }
 
@@ -86,10 +95,10 @@ function parseWatermark(raw: unknown, fallback: WatermarkStyle): WatermarkStyle 
   return {
     enabled: Boolean(o.enabled),
     text: typeof o.text === 'string' ? o.text.slice(0, WATERMARK_TEXT_MAX_LENGTH) : fallback.text,
-    fontSize: Math.max(1, asFiniteNumber(o.fontSize, fallback.fontSize)),
+    fontSize: clampWatermarkFontSize(asFiniteNumber(o.fontSize, fallback.fontSize)),
     opacity: Math.min(1, Math.max(0, asFiniteNumber(o.opacity, fallback.opacity))),
-    rotation: asFiniteNumber(o.rotation, fallback.rotation),
-    density: Math.max(1, asFiniteNumber(o.density, fallback.density)),
+    rotation: clampWatermarkRotation(asFiniteNumber(o.rotation, fallback.rotation)),
+    density: clampWatermarkDensity(asFiniteNumber(o.density, fallback.density)),
     mode,
     position,
   }
@@ -128,10 +137,9 @@ export function parsePersistedStyle(raw: unknown): CollageStyle | null {
     styleRaw.background && typeof styleRaw.background === 'object'
       ? (styleRaw.background as Record<string, unknown>)
       : null
-  const color =
-    bgRaw && typeof bgRaw.color === 'string' && bgRaw.color
-      ? bgRaw.color
-      : DEFAULT_STYLE.background.color
+  const color = sanitizeBackgroundColor(
+    bgRaw && typeof bgRaw.color === 'string' ? bgRaw.color : null,
+  )
   const imageIdRaw = bgRaw?.imageId
   const imageId =
     imageIdRaw === STYLE_BG_MARKER
@@ -155,12 +163,12 @@ export function parsePersistedStyle(raw: unknown): CollageStyle | null {
         : null
 
   return {
-    aspectRatio: { width, height },
+    aspectRatio: { width: clampAspectSide(width), height: clampAspectSide(height) },
     printSizeId,
     commonAspectId,
     aspectSource,
-    spacing: Math.max(0, asFiniteNumber(styleRaw.spacing, DEFAULT_STYLE.spacing)),
-    radius: Math.max(0, asFiniteNumber(styleRaw.radius, DEFAULT_STYLE.radius)),
+    spacing: clampStyleLength(asFiniteNumber(styleRaw.spacing, DEFAULT_STYLE.spacing)),
+    radius: clampStyleLength(asFiniteNumber(styleRaw.radius, DEFAULT_STYLE.radius)),
     borders: parseBorders(styleRaw.borders, DEFAULT_STYLE.borders),
     background: { color, imageId },
     watermark: parseWatermark(styleRaw.watermark, DEFAULT_STYLE.watermark),
