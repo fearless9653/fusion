@@ -9,7 +9,7 @@ import type {
   WatermarkPosition,
   WatermarkStyle,
 } from '@/entities/session'
-import { DEFAULT_STYLE } from '@/entities/session'
+import { DEFAULT_STYLE, WATERMARK_TEXT_MAX_LENGTH } from '@/entities/session'
 import {
   deleteStyleBackgroundBlob,
   getStyleBackgroundBlob,
@@ -85,7 +85,7 @@ function parseWatermark(raw: unknown, fallback: WatermarkStyle): WatermarkStyle 
     : fallback.position
   return {
     enabled: Boolean(o.enabled),
-    text: typeof o.text === 'string' ? o.text : fallback.text,
+    text: typeof o.text === 'string' ? o.text.slice(0, WATERMARK_TEXT_MAX_LENGTH) : fallback.text,
     fontSize: Math.max(1, asFiniteNumber(o.fontSize, fallback.fontSize)),
     opacity: Math.min(1, Math.max(0, asFiniteNumber(o.opacity, fallback.opacity))),
     rotation: asFiniteNumber(o.rotation, fallback.rotation),

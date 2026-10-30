@@ -13,6 +13,7 @@ import type {
 } from '@/entities/session'
 import {
   DEFAULT_STYLE,
+  WATERMARK_TEXT_MAX_LENGTH,
   canRedo,
   canUndo,
   createDefaultSessionState,
@@ -294,10 +295,14 @@ export const useCollageStore = defineStore('collage', () => {
         }
       }
       if (partial.watermark) {
-        draft.style.watermark = {
+        const watermark = {
           ...draft.style.watermark,
           ...partial.watermark,
         }
+        if (typeof watermark.text === 'string') {
+          watermark.text = watermark.text.slice(0, WATERMARK_TEXT_MAX_LENGTH)
+        }
+        draft.style.watermark = watermark
       }
       if (partial.aspectRatio) {
         draft.style.aspectRatio = { ...partial.aspectRatio }

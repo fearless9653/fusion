@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { WATERMARK_TEXT_MAX_LENGTH } from '@/entities/session'
 import { useCollageStore } from '@/features/canvas'
 import { LabeledRange, PanelSection } from '@/shared/ui'
 import {
@@ -62,7 +63,11 @@ const watermarkPositionSlots: Array<(typeof watermarkPositions)[number] | null> 
 ]
 
 function patchWatermark(partial: Partial<typeof style.value.watermark>): void {
-  collage.setStyle({ watermark: { ...style.value.watermark, ...partial } })
+  const next = { ...partial }
+  if (typeof next.text === 'string') {
+    next.text = next.text.slice(0, WATERMARK_TEXT_MAX_LENGTH)
+  }
+  collage.setStyle({ watermark: { ...style.value.watermark, ...next } })
 }
 </script>
 
@@ -85,6 +90,7 @@ function patchWatermark(partial: Partial<typeof style.value.watermark>): void {
       <input
         type="text"
         class="mt-1 w-full rounded border border-border bg-surface px-2 py-1 text-ink"
+        :maxlength="WATERMARK_TEXT_MAX_LENGTH"
         :value="style.watermark.text"
         @change="patchWatermark({ text: ($event.target as HTMLInputElement).value })"
       />

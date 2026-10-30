@@ -61,6 +61,19 @@ describe('stylePersistence', () => {
     expect(loaded?.background.imageId).toBe(STYLE_BG_MARKER)
   })
 
+  it('parsePersistedStyle truncates watermark text longer than WATERMARK_TEXT_MAX_LENGTH', () => {
+    const long = 'x'.repeat(50)
+    const parsed = parsePersistedStyle({
+      schemaVersion: 1,
+      style: {
+        ...DEFAULT_STYLE,
+        watermark: { ...DEFAULT_STYLE.watermark, text: long },
+      },
+    })
+    expect(parsed?.watermark.text).toBe(long.slice(0, 32))
+    expect(parsed?.watermark.text.length).toBe(32)
+  })
+
   it('parsePersistedStyle drops unknown registry ids (no portable blob)', () => {
     const parsed = parsePersistedStyle({
       schemaVersion: 1,

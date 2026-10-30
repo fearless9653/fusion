@@ -19,6 +19,7 @@ export {
   DEFAULT_STYLE,
   MAX_CELL_SCALE,
   MIN_CELL_SCALE,
+  WATERMARK_TEXT_MAX_LENGTH,
   clampCellScale,
   createDefaultSessionState,
   createEmptyCellImages,

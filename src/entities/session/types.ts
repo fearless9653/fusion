@@ -25,6 +25,9 @@ export type WatermarkMode = 'tile' | 'single'
 
 export type WatermarkPosition = 'center' | 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'
 
+/** Max watermark label length (UTF-16 code units / string.length / HTML maxlength). */
+export const WATERMARK_TEXT_MAX_LENGTH = 32
+
 /**
  * Watermark overlay settings.
  * `density` is a relative packing factor (1 = sparse … 5 = dense) for `mode: 'tile'`.
