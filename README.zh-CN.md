@@ -71,7 +71,7 @@ pnpm dev
 | `pnpm typecheck`              | 仅类型检查                                             |
 | `pnpm test` / `pnpm test:run` | Vitest 监听 / CI 单次                                  |
 | `pnpm icons:pwa`              | 从 `public/favicon.svg` 重新生成 PWA 图标              |
-| `pnpm deploy`                 | `pnpm build` + `npx wrangler deploy`（Workers Assets） |
+| `pnpm run deploy:cf`          | `pnpm build` + `npx wrangler deploy`（Workers Assets） |
 
 CI（GitHub Actions）：在 `main` / PR 上依次执行 lint → typecheck → test → build。
 
@@ -88,9 +88,15 @@ pnpm build
 纯静态 Assets Worker（无 `main` 脚本）。SPA 回退由 `wrangler.toml` 中 `assets.not_found_handling = "single-page-application"` 负责。`public/_headers`（构建时由 Vite 复制到 `dist/`）让 `index.html` / `sw.js` 每次校验最新，带 hash 的 `/assets/*` 长期缓存。`public/_redirects` 保留以兼容 Pages 过渡期 / 其它静态主机；Workers SPA 模式为主。
 
 ```bash
-pnpm build && npx wrangler deploy
-# 或：pnpm deploy
+# 本地一键部署
+pnpm run deploy:cf
+
+# 或拆分（推荐用于 Cloudflare Workers Builds）：
+pnpm run build
+npx wrangler deploy
 ```
+
+**Cloudflare Workers Builds**（控制台）：**Build command** 设为 `pnpm run build`，**Deploy command** 设为 `npx wrangler deploy`。不要使用 `pnpm deploy`——那会触发 pnpm 仅限 workspace 的内置命令，报 `ERR_PNPM_CANNOT_DEPLOY`。本地若要一键部署，请用 `pnpm run deploy:cf`（必须带 `run`）。
 
 现有 Cloudflare Pages 项目可保留至自定义域名切换完成。Workers 自定义域名要求该区域使用 Cloudflare 名称服务器。
 

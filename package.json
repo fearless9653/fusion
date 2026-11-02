@@ -17,7 +17,7 @@
     "test:run": "vitest run",
     "prepare": "husky",
     "icons:pwa": "node scripts/gen-pwa-icons.mjs",
-    "deploy": "pnpm build && npx wrangler deploy"
+    "deploy:cf": "pnpm build && npx wrangler deploy"
   },
   "dependencies": {
     "@lucide/vue": "^1.65.0",

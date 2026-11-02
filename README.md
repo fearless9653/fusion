@@ -71,7 +71,7 @@ Open the URL printed by Vite.
 | `pnpm typecheck`              | Typecheck only                                        |
 | `pnpm test` / `pnpm test:run` | Vitest watch / CI once                                |
 | `pnpm icons:pwa`              | Regenerate PWA icons from `public/favicon.svg`        |
-| `pnpm deploy`                 | `pnpm build` + `npx wrangler deploy` (Workers Assets) |
+| `pnpm run deploy:cf`          | `pnpm build` + `npx wrangler deploy` (Workers Assets) |
 
 CI (GitHub Actions): lint → typecheck → test → build on `main` / pull requests.
 
@@ -88,9 +88,15 @@ Output directory: `dist/`.
 Assets-only Worker — no `main` script. SPA fallback is `assets.not_found_handling = "single-page-application"` in `wrangler.toml`. Cache rules in `public/_headers` (copied into `dist/` by Vite) keep `index.html` / `sw.js` revalidating while hashed `/assets/*` stay immutable. `public/_redirects` remains for Pages interim / other static hosts; Workers SPA mode is primary.
 
 ```bash
-pnpm build && npx wrangler deploy
-# or: pnpm deploy
+# Local one-shot
+pnpm run deploy:cf
+
+# Or split (recommended for Cloudflare Workers Builds):
+pnpm run build
+npx wrangler deploy
 ```
+
+**Cloudflare Workers Builds** (dashboard): set **Build command** to `pnpm run build` and **Deploy command** to `npx wrangler deploy`. Do **not** use `pnpm deploy` — that invokes pnpm's workspace-only built-in and fails with `ERR_PNPM_CANNOT_DEPLOY`. If you prefer a single deploy step locally, use `pnpm run deploy:cf` (must include `run`).
 
 The existing Cloudflare Pages project can stay until you cut over the custom domain. Custom domains on Workers require the zone to use Cloudflare nameservers.
 
