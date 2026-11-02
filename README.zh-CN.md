@@ -39,13 +39,13 @@
 
 ## 技术栈
 
-| 领域   | 选型                                                                                          |
-| ------ | --------------------------------------------------------------------------------------------- |
-| UI     | Vue 3、Vue Router、Pinia、Tailwind CSS v4、Lucide                                             |
-| 语言   | TypeScript、vue-i18n、Zod                                                                     |
-| 工程   | Vite 7、ESLint、Prettier、Vitest、Husky、lint-staged、pnpm                                    |
-| Worker | `imageDecode` / `imageBake`（ES module）                                                      |
-| 托管   | 静态 SPA — 已适配 Cloudflare Pages（`wrangler.toml`、`public/_redirects`、`public/_headers`） |
+| 领域   | 选型                                                                                  |
+| ------ | ------------------------------------------------------------------------------------- |
+| UI     | Vue 3、Vue Router、Pinia、Tailwind CSS v4、Lucide                                     |
+| 语言   | TypeScript、vue-i18n、Zod                                                             |
+| 工程   | Vite 7、ESLint、Prettier、Vitest、Husky、lint-staged、pnpm                            |
+| Worker | `imageDecode` / `imageBake`（ES module）                                              |
+| 托管   | 静态 SPA — Cloudflare Workers Assets（`wrangler.toml` `[assets]`、`public/_headers`） |
 
 ## 环境要求
 
@@ -61,16 +61,17 @@ pnpm dev
 
 按 Vite 终端提示打开本地地址。
 
-| 命令                          | 说明                                      |
-| ----------------------------- | ----------------------------------------- |
-| `pnpm dev`                    | 开发服务器                                |
-| `pnpm build`                  | `vue-tsc --noEmit` + 生产构建 → `dist/`   |
-| `pnpm preview`                | 预览构建产物                              |
-| `pnpm lint`                   | ESLint                                    |
-| `pnpm format`                 | Prettier 写入                             |
-| `pnpm typecheck`              | 仅类型检查                                |
-| `pnpm test` / `pnpm test:run` | Vitest 监听 / CI 单次                     |
-| `pnpm icons:pwa`              | 从 `public/favicon.svg` 重新生成 PWA 图标 |
+| 命令                          | 说明                                                   |
+| ----------------------------- | ------------------------------------------------------ |
+| `pnpm dev`                    | 开发服务器                                             |
+| `pnpm build`                  | `vue-tsc --noEmit` + 生产构建 → `dist/`                |
+| `pnpm preview`                | 预览构建产物                                           |
+| `pnpm lint`                   | ESLint                                                 |
+| `pnpm format`                 | Prettier 写入                                          |
+| `pnpm typecheck`              | 仅类型检查                                             |
+| `pnpm test` / `pnpm test:run` | Vitest 监听 / CI 单次                                  |
+| `pnpm icons:pwa`              | 从 `public/favicon.svg` 重新生成 PWA 图标              |
+| `pnpm deploy`                 | `pnpm build` + `npx wrangler deploy`（Workers Assets） |
 
 CI（GitHub Actions）：在 `main` / PR 上依次执行 lint → typecheck → test → build。
 
@@ -82,20 +83,16 @@ pnpm build
 
 产物目录：`dist/`。
 
-### Cloudflare Pages
+### Cloudflare Workers（Static Assets）
 
-| 配置项           | 值                                 |
-| ---------------- | ---------------------------------- |
-| Build command    | `pnpm run build`                   |
-| Output directory | `dist`                             |
-| Node 版本        | `22`（建议设置 `NODE_VERSION=22`） |
-
-前端路由回退由 `public/_redirects` 提供（`/* → /index.html` 200）。`public/_headers` 让 `index.html` / `sw.js` 每次校验最新，带 hash 的 `/assets/*` 则长期缓存。也可使用 Wrangler：
+纯静态 Assets Worker（无 `main` 脚本）。SPA 回退由 `wrangler.toml` 中 `assets.not_found_handling = "single-page-application"` 负责。`public/_headers`（构建时由 Vite 复制到 `dist/`）让 `index.html` / `sw.js` 每次校验最新，带 hash 的 `/assets/*` 长期缓存。`public/_redirects` 保留以兼容 Pages 过渡期 / 其它静态主机；Workers SPA 模式为主。
 
 ```bash
-pnpm build
-npx wrangler pages deploy dist --project-name=fusion
+pnpm build && npx wrangler deploy
+# 或：pnpm deploy
 ```
+
+现有 Cloudflare Pages 项目可保留至自定义域名切换完成。Workers 自定义域名要求该区域使用 Cloudflare 名称服务器。
 
 其它能托管 `dist/` 并为未知路径回退到 `index.html` 的静态主机同样适用。
 
@@ -109,7 +106,7 @@ src/
   entities/     # 布局 Schema、会话类型
   shared/       # 通用 UI、工具库、Worker
   locales/      # zh-CN、en（键需保持对等）
-public/         # favicon、PWA 图标、robots.txt、_redirects、_headers
+public/         # favicon、PWA 图标、robots.txt、_headers（及可选 _redirects）
 ```
 
 布局 JSON 只描述网格；样式、单元格图片与变换保存在会话状态中，不写入布局文件。

@@ -1,2 +1,4 @@
-﻿# Cloudflare Pages SPA fallback — serve index.html for client routes
+# Optional SPA rewrite for Pages interim / other static hosts.
+# On Workers Assets, primary SPA handling is wrangler.toml
+# assets.not_found_handling = "single-page-application".
 /*    /index.html   200

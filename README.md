@@ -39,13 +39,13 @@ Photos never leave your device. There is no account, no upload API, and no cloud
 
 ## Tech stack
 
-| Area     | Choice                                                                                        |
-| -------- | --------------------------------------------------------------------------------------------- |
-| UI       | Vue 3, Vue Router, Pinia, Tailwind CSS v4, Lucide                                             |
-| Language | TypeScript, vue-i18n, Zod                                                                     |
-| Tooling  | Vite 7, ESLint, Prettier, Vitest, Husky, lint-staged, pnpm                                    |
-| Workers  | `imageDecode` / `imageBake` (ES modules)                                                      |
-| Hosting  | Static SPA — Cloudflare Pages ready (`wrangler.toml`, `public/_redirects`, `public/_headers`) |
+| Area     | Choice                                                                                 |
+| -------- | -------------------------------------------------------------------------------------- |
+| UI       | Vue 3, Vue Router, Pinia, Tailwind CSS v4, Lucide                                      |
+| Language | TypeScript, vue-i18n, Zod                                                              |
+| Tooling  | Vite 7, ESLint, Prettier, Vitest, Husky, lint-staged, pnpm                             |
+| Workers  | `imageDecode` / `imageBake` (ES modules)                                               |
+| Hosting  | Static SPA — Cloudflare Workers Assets (`wrangler.toml` `[assets]`, `public/_headers`) |
 
 ## Requirements
 
@@ -61,16 +61,17 @@ pnpm dev
 
 Open the URL printed by Vite.
 
-| Command                       | Purpose                                         |
-| ----------------------------- | ----------------------------------------------- |
-| `pnpm dev`                    | Dev server                                      |
-| `pnpm build`                  | `vue-tsc --noEmit` + production build → `dist/` |
-| `pnpm preview`                | Preview production build                        |
-| `pnpm lint`                   | ESLint                                          |
-| `pnpm format`                 | Prettier write                                  |
-| `pnpm typecheck`              | Typecheck only                                  |
-| `pnpm test` / `pnpm test:run` | Vitest watch / CI once                          |
-| `pnpm icons:pwa`              | Regenerate PWA icons from `public/favicon.svg`  |
+| Command                       | Purpose                                               |
+| ----------------------------- | ----------------------------------------------------- |
+| `pnpm dev`                    | Dev server                                            |
+| `pnpm build`                  | `vue-tsc --noEmit` + production build → `dist/`       |
+| `pnpm preview`                | Preview production build                              |
+| `pnpm lint`                   | ESLint                                                |
+| `pnpm format`                 | Prettier write                                        |
+| `pnpm typecheck`              | Typecheck only                                        |
+| `pnpm test` / `pnpm test:run` | Vitest watch / CI once                                |
+| `pnpm icons:pwa`              | Regenerate PWA icons from `public/favicon.svg`        |
+| `pnpm deploy`                 | `pnpm build` + `npx wrangler deploy` (Workers Assets) |
 
 CI (GitHub Actions): lint → typecheck → test → build on `main` / pull requests.
 
@@ -82,20 +83,16 @@ pnpm build
 
 Output directory: `dist/`.
 
-### Cloudflare Pages
+### Cloudflare Workers (Static Assets)
 
-| Setting          | Value                                |
-| ---------------- | ------------------------------------ |
-| Build command    | `pnpm run build`                     |
-| Output directory | `dist`                               |
-| Node version     | `22` (`NODE_VERSION=22` recommended) |
-
-SPA fallback for client routes is provided by `public/_redirects` (`/* → /index.html` 200). Cache headers in `public/_headers` keep `index.html` / `sw.js` revalidating while hashed `/assets/*` stay immutable. Optional CLI:
+Assets-only Worker — no `main` script. SPA fallback is `assets.not_found_handling = "single-page-application"` in `wrangler.toml`. Cache rules in `public/_headers` (copied into `dist/` by Vite) keep `index.html` / `sw.js` revalidating while hashed `/assets/*` stay immutable. `public/_redirects` remains for Pages interim / other static hosts; Workers SPA mode is primary.
 
 ```bash
-pnpm build
-npx wrangler pages deploy dist --project-name=fusion
+pnpm build && npx wrangler deploy
+# or: pnpm deploy
 ```
+
+The existing Cloudflare Pages project can stay until you cut over the custom domain. Custom domains on Workers require the zone to use Cloudflare nameservers.
 
 Any static host that serves `dist/` and rewrites unknown paths to `index.html` also works.
 
@@ -109,7 +106,7 @@ src/
   entities/     # Layout schema, session types
   shared/       # UI primitives, libs, workers
   locales/      # zh-CN, en (keep keys in sync)
-public/         # favicon, PWA icons, robots.txt, _redirects, _headers
+public/         # favicon, PWA icons, robots.txt, _headers (+ optional _redirects)
 ```
 
 Layout JSON describes the grid only. Session style, cell images, and transforms live in app state — they are not written into layout files.
