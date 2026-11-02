@@ -85,7 +85,7 @@ pnpm build
 
 ### Cloudflare Workers（Static Assets）
 
-纯静态 Assets Worker（无 `main` 脚本）。SPA 回退由 `wrangler.toml` 中 `assets.not_found_handling = "single-page-application"` 负责。`public/_headers`（构建时由 Vite 复制到 `dist/`）让 `index.html` / `sw.js` 每次校验最新，带 hash 的 `/assets/*` 长期缓存。`public/_redirects` 保留以兼容 Pages 过渡期 / 其它静态主机；Workers SPA 模式为主。
+纯静态 Assets Worker（无 `main` 脚本）。SPA 回退由 `wrangler.toml` 中 `assets.not_found_handling = "single-page-application"` 负责。`public/_headers`（构建时由 Vite 复制到 `dist/`）让 `index.html` / `sw.js` 每次校验最新，带 hash 的 `/assets/*` 长期缓存。不要添加 Pages 风格的 `public/_redirects` SPA 兜底（`/* /index.html 200`）——会与 Workers Assets 的 `not_found_handling` 冲突，部署时报无限循环错误 100324。SPA 回退仅由 wrangler 配置。
 
 ```bash
 # 本地一键部署
@@ -112,7 +112,7 @@ src/
   entities/     # 布局 Schema、会话类型
   shared/       # 通用 UI、工具库、Worker
   locales/      # zh-CN、en（键需保持对等）
-public/         # favicon、PWA 图标、robots.txt、_headers（及可选 _redirects）
+public/         # favicon、PWA 图标、robots.txt、_headers（Workers 上勿放 _redirects SPA 兜底）
 ```
 
 布局 JSON 只描述网格；样式、单元格图片与变换保存在会话状态中，不写入布局文件。

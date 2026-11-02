@@ -85,7 +85,7 @@ Output directory: `dist/`.
 
 ### Cloudflare Workers (Static Assets)
 
-Assets-only Worker — no `main` script. SPA fallback is `assets.not_found_handling = "single-page-application"` in `wrangler.toml`. Cache rules in `public/_headers` (copied into `dist/` by Vite) keep `index.html` / `sw.js` revalidating while hashed `/assets/*` stay immutable. `public/_redirects` remains for Pages interim / other static hosts; Workers SPA mode is primary.
+Assets-only Worker — no `main` script. SPA fallback is `assets.not_found_handling = "single-page-application"` in `wrangler.toml`. Cache rules in `public/_headers` (copied into `dist/` by Vite) keep `index.html` / `sw.js` revalidating while hashed `/assets/*` stay immutable. Do **not** add a Pages-style `public/_redirects` SPA catch-all (`/* /index.html 200`) — it conflicts with Workers Assets `not_found_handling` and fails deploy with infinite-loop error 100324. SPA fallback is wrangler-only.
 
 ```bash
 # Local one-shot
@@ -112,7 +112,7 @@ src/
   entities/     # Layout schema, session types
   shared/       # UI primitives, libs, workers
   locales/      # zh-CN, en (keep keys in sync)
-public/         # favicon, PWA icons, robots.txt, _headers (+ optional _redirects)
+public/         # favicon, PWA icons, robots.txt, _headers (no _redirects SPA catch-all on Workers)
 ```
 
 Layout JSON describes the grid only. Session style, cell images, and transforms live in app state — they are not written into layout files.
