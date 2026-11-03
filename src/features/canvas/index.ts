@@ -26,3 +26,9 @@ export {
   deleteStyleBackgroundBlob,
   resetStyleBackgroundIdbForTests,
 } from './styleBackgroundIdb'
+export {
+  SELECTED_LAYOUT_KEY,
+  readSelectedLayoutId,
+  writeSelectedLayoutId,
+  resolvePersistedLayout,
+} from './layoutSelectionStorage'

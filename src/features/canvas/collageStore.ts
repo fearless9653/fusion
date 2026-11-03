@@ -49,6 +49,7 @@ import { useImageRegistry } from '@/features/images'
 import { normalizeFractions, redistributeAdjacent } from '@/shared/lib'
 import { showToast } from '@/shared/ui'
 import { rememberAppliedCustomLayout } from './customLayoutRegistry'
+import { writeSelectedLayoutId } from './layoutSelectionStorage'
 import {
   STYLE_BG_MARKER,
   clearPersistedStyleAndBackground,
@@ -273,6 +274,8 @@ export const useCollageStore = defineStore('collage', () => {
         }
       }
     })
+    // UI preference — not cleared by resetStyles.
+    writeSelectedLayoutId(parsed.id)
   }
 
   /**

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { getTemplate } from '@/entities/layout'
+import { ensureTemplateCatalog, getTemplate } from '@/entities/layout'
 import { useCollageStore } from '@/features/canvas'
 import LayoutPicker from '@/features/canvas/components/LayoutPicker.vue'
 import CollageCanvas from '@/features/canvas/components/CollageCanvas.vue'
@@ -14,6 +14,10 @@ import {
 } from '@/features/canvas/sidebarCollapse'
 import { useStageSidebarInsets } from '@/features/canvas/composables/useStageSidebarInsets'
 import { fillEmptyCells, imageFilesFromList, isFileDrag, useImageRegistry } from '@/features/images'
+import {
+  readSelectedLayoutId,
+  resolvePersistedLayout,
+} from '@/features/canvas/layoutSelectionStorage'
 import { clearCustomLayoutHandoff, readCustomLayoutHandoff } from '@/features/layout-editor'
 import { SidebarShell, showToast } from '@/shared/ui'
 
@@ -65,9 +69,24 @@ onMounted(() => {
     }
   }
   if (!collage.layout) {
-    // Product default: five-panel pinwheel (五图旋风 / favicon). Always in CORE_TEMPLATES.
-    const defaultTpl = getTemplate('tpl_5_center')
-    if (defaultTpl) collage.setLayout(defaultTpl)
+    const applyRestoredOrDefault = (): void => {
+      if (collage.layout) return
+      const restored = resolvePersistedLayout()
+      const tpl = restored ?? getTemplate('tpl_5_center')
+      if (tpl) collage.setLayout(tpl)
+    }
+    const savedId = readSelectedLayoutId()
+    const quick = resolvePersistedLayout()
+    if (quick) {
+      collage.setLayout(quick)
+    } else if (savedId) {
+      // Catalog templates load lazily; retry after ensureTemplateCatalog.
+      void ensureTemplateCatalog()
+        .catch(() => {})
+        .finally(applyRestoredOrDefault)
+    } else {
+      applyRestoredOrDefault()
+    }
   }
 })
 
