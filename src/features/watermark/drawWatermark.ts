@@ -1,4 +1,5 @@
 import type { WatermarkStyle } from '@/entities/session'
+import { watermarkCanvasFont } from './watermarkFont'
 import {
   measureWatermarkText,
   resolveWatermarkMode,
@@ -30,7 +31,7 @@ export function drawWatermark(
   ctx.save()
   ctx.globalAlpha = opacity
   ctx.fillStyle = '#000000'
-  ctx.font = `${fontSize}px sans-serif`
+  ctx.font = watermarkCanvasFont(fontSize)
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
 

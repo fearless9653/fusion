@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { getTemplate } from '@/entities/layout'
 import { DEFAULT_STYLE, createEmptyCellImages } from '@/entities/session'
 import { coverDrawRect, drawCoverImage, renderCollage } from './renderCollage'
+import { watermarkCanvasFont } from '@/features/watermark'
 import { exportFilename, jpegQualityFor } from './exportIo'
 
 function mockCtx() {
@@ -202,7 +203,7 @@ describe('renderCollage watermark fontSize scale', () => {
       previewSize: { width: previewW, height: previewW },
     })
     const expected = sessionFontSize * (2000 / previewW)
-    expect(ctx.font).toBe(`${expected}px sans-serif`)
+    expect(ctx.font).toBe(watermarkCanvasFont(expected))
     vi.restoreAllMocks()
   })
 
@@ -235,7 +236,7 @@ describe('renderCollage watermark fontSize scale', () => {
       cellImages: createEmptyCellImages(4),
       images: new Map(),
     })
-    expect(ctx.font).toBe(`${sessionFontSize}px sans-serif`)
+    expect(ctx.font).toBe(watermarkCanvasFont(sessionFontSize))
     vi.restoreAllMocks()
   })
 })

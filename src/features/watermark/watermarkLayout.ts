@@ -4,6 +4,7 @@
 
 import type { WatermarkPosition, WatermarkStyle } from '@/entities/session'
 import { assertNever } from '@/shared/utils'
+import { watermarkCanvasFont } from './watermarkFont'
 
 export type WatermarkPoint = { x: number; y: number }
 
@@ -45,7 +46,7 @@ export function measureWatermarkText(
     return estimateTextSize(text, fs)
   }
   const prev = ctx.font
-  ctx.font = `${fs}px sans-serif`
+  ctx.font = watermarkCanvasFont(fs)
   const m = ctx.measureText(text)
   const ascent = m.actualBoundingBoxAscent
   const descent = m.actualBoundingBoxDescent

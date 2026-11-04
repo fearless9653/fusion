@@ -5,6 +5,7 @@ import CellChrome from '@/features/canvas/components/CellChrome.vue'
 import { useGutterDrag } from '@/features/canvas/composables/useGutterDrag'
 import { useCellPointerInteractions } from '@/features/canvas/composables/useCellPointerInteractions'
 import { useWatermarkPreview } from '@/features/canvas/composables/useWatermarkPreview'
+import { WATERMARK_FONT_FAMILY } from '@/features/watermark'
 import { useCollageStore } from '@/features/canvas'
 import {
   assignImagesFromIndex,
@@ -414,6 +415,7 @@ onUnmounted(() => {
             :style="{
               opacity: style.watermark.opacity,
               transform: `rotate(${style.watermark.rotation}deg)`,
+              fontFamily: WATERMARK_FONT_FAMILY,
               fontSize: `${style.watermark.fontSize}px`,
               color: '#000',
             }"
@@ -441,6 +443,7 @@ onUnmounted(() => {
                 left: `${item.x}px`,
                 top: `${item.y}px`,
                 transform: `translate(-50%, -50%) rotate(${style.watermark.rotation}deg)`,
+                fontFamily: WATERMARK_FONT_FAMILY,
                 fontSize: `${style.watermark.fontSize}px`,
                 opacity: style.watermark.opacity,
                 color: '#000',
